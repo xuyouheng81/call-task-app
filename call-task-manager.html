@@ -1,0 +1,1804 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Google Identity Services + Drive API -->
+<script src="https://accounts.google.com/gsi/client" async></script>
+<script src="https://apis.google.com/js/api.js" async></script>
+<title>통화 업무지시 관리</title>
+<style>
+:root {
+  --bg:#f5f4f0; --surface:#fff; --surface2:#f9f8f5;
+  --border:rgba(0,0,0,0.1); --text:#1a1a18; --text2:#5a5a56; --text3:#9a9a94;
+  --teal:#0F6E56; --teal-light:#E1F5EE; --teal-mid:#1D9E75;
+  --purple:#534AB7; --purple-light:#EEEDFE;
+  --coral:#993C1D; --coral-light:#FAECE7;
+  --amber:#854F0B; --amber-light:#FAEEDA;
+  --blue:#185FA5; --blue-light:#E6F1FB;
+  --green:#3B6D11; --green-light:#EAF3DE;
+  --red:#A32D2D; --red-light:#FCEBEB; --red-mid:#E24B4A;
+  --radius:12px; --radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;}
+.app{max-width:420px;margin:0 auto;min-height:100vh;background:var(--surface);display:flex;flex-direction:column;}
+
+/* ── Header ── */
+.header{padding:20px 16px 12px;border-bottom:1px solid var(--border);background:var(--surface);position:sticky;top:0;z-index:10;}
+.header-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;}
+.header h1{font-size:20px;font-weight:600;}
+.status-badge{font-size:11px;background:var(--teal-light);color:var(--teal);padding:3px 10px;border-radius:20px;font-weight:500;}
+.tabs{display:flex;gap:3px;background:var(--surface2);border-radius:var(--radius-sm);padding:3px;}
+.tab{flex:1;padding:7px 0;text-align:center;font-size:12px;border-radius:6px;cursor:pointer;color:var(--text2);transition:all 0.2s;border:none;background:none;font-family:inherit;}
+.tab.active{background:var(--surface);color:var(--text);font-weight:500;box-shadow:0 1px 3px rgba(0,0,0,0.1);}
+
+/* ── Pages ── */
+.section{flex:1;overflow-y:auto;}
+.page{display:none;padding:16px;}
+.page.active{display:block;}
+.section-title{font-size:12px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);margin-bottom:10px;margin-top:4px;}
+
+/* ── API 배너 ── */
+.api-banner{background:var(--blue-light);border:1px solid #B5D4F4;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;}
+.api-banner-title{font-size:13px;font-weight:500;color:var(--blue);margin-bottom:6px;}
+.api-banner p{font-size:12px;color:var(--text2);margin-bottom:8px;line-height:1.5;}
+.api-row{display:flex;gap:6px;}
+.api-input{flex:1;padding:8px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:12px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;}
+.api-save-btn{padding:8px 12px;background:var(--blue);color:white;border:none;border-radius:var(--radius-sm);font-size:12px;cursor:pointer;font-family:inherit;white-space:nowrap;}
+.api-ok{background:var(--teal-light);border-color:#9FE1CB;}
+.api-ok .api-banner-title{color:var(--teal);}
+
+/* ── 음성 녹음 ── */
+.voice-panel{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.voice-panel h3{font-size:15px;font-weight:500;margin-bottom:4px;}
+.voice-panel p{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5;}
+.rec-btn-wrap{display:flex;flex-direction:column;align-items:center;gap:12px;}
+.rec-btn{width:72px;height:72px;border-radius:50%;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;}
+.rec-btn.idle{background:var(--red-light);}
+.rec-btn.idle:hover{background:#f7c1c1;}
+.rec-btn.recording{background:var(--red-mid);animation:pulse 1.2s ease-in-out infinite;}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(226,75,74,0.35);}50%{box-shadow:0 0 0 14px rgba(226,75,74,0);}}
+.rec-icon{width:28px;height:28px;}
+.rec-status{font-size:13px;font-weight:500;color:var(--text2);text-align:center;}
+.rec-status.recording{color:var(--red-mid);}
+.rec-timer{font-size:22px;font-weight:600;letter-spacing:0.04em;color:var(--text);display:none;}
+.waveform-wrap{width:100%;height:44px;display:none;margin-top:8px;}
+.waveform-wrap.show{display:block;}
+#waveform-canvas{width:100%;height:44px;border-radius:var(--radius-sm);background:var(--surface);}
+.rec-result{display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:14px;}
+.rec-result.show{display:block;}
+.playback-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.play-btn{width:36px;height:36px;border-radius:50%;background:var(--teal-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.play-btn svg{width:14px;height:14px;}
+.playback-bar-wrap{flex:1;height:4px;background:var(--border);border-radius:2px;cursor:pointer;}
+.playback-bar{height:4px;background:var(--teal-mid);border-radius:2px;width:0%;transition:width 0.1s;}
+.playback-time{font-size:12px;color:var(--text3);min-width:36px;text-align:right;}
+.name-row{display:flex;gap:8px;margin-bottom:10px;}
+.name-input{flex:1;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;}
+.name-input:focus{border-color:var(--teal-mid);}
+.discard-btn{padding:10px 14px;border:1px solid var(--border);border-radius:var(--radius-sm);background:var(--surface);color:var(--text2);font-size:13px;cursor:pointer;font-family:inherit;}
+.save-audio-btn{width:100%;padding:10px;background:var(--surface);color:var(--teal);border:1.5px solid var(--teal-mid);border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;margin-bottom:8px;}
+.save-audio-btn:hover{background:var(--teal-light);}
+.analyze-voice-btn{width:100%;padding:11px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;}
+.analyze-voice-btn:hover{opacity:0.88;}
+.analyze-voice-btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+/* ── 구분선 ── */
+.divider{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
+.divider-line{flex:1;height:1px;background:var(--border);}
+.divider-text{font-size:12px;color:var(--text3);white-space:nowrap;}
+
+/* ── 샘플 통화 ── */
+.demo-calls{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
+.demo-call{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all 0.15s;text-align:left;width:100%;font-family:inherit;}
+.demo-call:hover{border-color:var(--teal-mid);background:var(--teal-light);}
+.call-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex-shrink:0;}
+.call-info{flex:1;min-width:0;}
+.call-name{font-size:14px;font-weight:500;}
+.call-meta{font-size:12px;color:var(--text2);margin-top:2px;}
+.call-duration{font-size:12px;color:var(--text3);}
+.demo-badge{font-size:10px;background:var(--amber-light);color:var(--amber);padding:2px 7px;border-radius:10px;font-weight:500;margin-left:6px;}
+
+/* ── 분석 카드 ── */
+.analysis-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;}
+.analysis-header{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.caller-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;}
+.analysis-header h4{font-size:14px;font-weight:500;}
+.atime{font-size:12px;color:var(--text3);}
+.transcript-box{padding:14px 16px;}
+.transcript-label{font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.05em;color:var(--text3);margin-bottom:8px;}
+.transcript-text{font-size:13px;line-height:1.7;color:var(--text2);background:var(--surface2);padding:12px;border-radius:var(--radius-sm);max-height:100px;overflow-y:auto;}
+.analyzing{display:flex;align-items:center;gap:8px;padding:14px 16px;color:var(--text2);font-size:13px;}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--teal-mid);border-radius:50%;animation:spin 0.8s linear infinite;flex-shrink:0;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.extracted-tasks{padding:0 16px 14px;}
+.task-chip{display:flex;align-items:flex-start;gap:10px;background:var(--teal-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px;}
+.task-chip-icon{width:20px;height:20px;background:var(--teal-mid);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.task-chip-icon svg{width:10px;height:10px;}
+.task-chip-title{font-size:13px;font-weight:500;color:var(--teal);}
+.task-chip-meta{font-size:12px;color:var(--text2);margin-top:3px;}
+.add-btn{width:100%;padding:11px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;}
+.add-btn:hover{opacity:0.88;}
+.add-btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+/* ── 업무 직접 추가 폼 ── */
+.add-task-form{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
+.add-task-form h3{font-size:14px;font-weight:500;margin-bottom:12px;}
+.form-field{margin-bottom:10px;}
+.form-label{font-size:12px;color:var(--text2);margin-bottom:5px;display:block;}
+.form-input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;}
+.form-input:focus{border-color:var(--teal-mid);}
+.form-row{display:flex;gap:8px;}
+.form-row .form-field{flex:1;}
+.form-select{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:14px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;cursor:pointer;}
+.form-select:focus{border-color:var(--teal-mid);}
+.form-submit{width:100%;padding:11px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:4px;}
+.form-submit:hover{opacity:0.88;}
+
+/* ── 업무 목록 ── */
+.filter-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
+.filter-btn{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-family:inherit;transition:all 0.15s;}
+.filter-btn.active{background:var(--text);color:white;border-color:var(--text);}
+.task-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;}
+.task-card-top{display:flex;align-items:flex-start;gap:10px;}
+.task-check{width:20px;height:20px;border-radius:50%;border:2px solid var(--border);cursor:pointer;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.15s;}
+.task-check.done{background:var(--teal-mid);border-color:var(--teal-mid);}
+.task-check svg{width:10px;height:10px;opacity:0;transition:opacity 0.15s;}
+.task-check.done svg{opacity:1;}
+.task-body{flex:1;min-width:0;}
+.task-title{font-size:14px;font-weight:500;line-height:1.4;}
+.task-title.done{text-decoration:line-through;color:var(--text3);}
+.task-tags{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;}
+.tag{font-size:11px;padding:3px 8px;border-radius:6px;font-weight:500;}
+.tag-person{background:var(--purple-light);color:var(--purple);}
+.tag-due{background:var(--amber-light);color:var(--amber);}
+.tag-priority-high{background:var(--coral-light);color:var(--coral);}
+.tag-priority-mid{background:var(--amber-light);color:var(--amber);}
+.tag-priority-low{background:var(--blue-light);color:var(--blue);}
+.tag-source{background:var(--surface2);color:var(--text2);}
+.tag-voice{background:var(--red-light);color:var(--red);}
+.tag-manual{background:var(--green-light);color:var(--green);}
+.tag-upload{background:var(--purple-light);color:var(--purple);}
+.task-progress{display:flex;gap:6px;margin-top:10px;}
+.prog-btn{flex:1;padding:6px 0;font-size:12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit;transition:all 0.15s;}
+.prog-btn.sel-wait{background:var(--coral-light);color:var(--coral);border-color:transparent;font-weight:500;}
+.prog-btn.sel-ing{background:var(--amber-light);color:var(--amber);border-color:transparent;font-weight:500;}
+.prog-btn.sel-done{background:var(--teal-light);color:var(--teal);border-color:transparent;font-weight:500;}
+.empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;line-height:1.8;}
+.task-delete{width:28px;height:28px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0;margin-top:0;}
+.task-delete:hover{background:var(--red-light);color:var(--red);}
+
+/* ── 메모 ── */
+.task-memo-toggle{display:flex;align-items:center;gap:5px;margin-top:10px;padding:0;background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3);font-family:inherit;width:100%;text-align:left;}
+.task-memo-toggle:hover{color:var(--text2);}
+.task-memo-toggle svg{width:13px;height:13px;flex-shrink:0;}
+.memo-count{font-size:11px;background:var(--amber-light);color:var(--amber);padding:1px 6px;border-radius:8px;font-weight:500;margin-left:2px;}
+.task-memo-area{display:none;margin-top:8px;border-top:1px solid var(--border);padding-top:10px;}
+.task-memo-area.open{display:block;}
+.memo-list{display:flex;flex-direction:column;gap:6px;margin-bottom:8px;}
+.memo-item{background:var(--amber-light);border-radius:var(--radius-sm);padding:9px 11px;position:relative;}
+.memo-item-text{font-size:13px;color:var(--text);line-height:1.55;white-space:pre-wrap;word-break:break-all;padding-right:22px;}
+.memo-item-time{font-size:11px;color:var(--amber);margin-top:4px;}
+.memo-item-del{position:absolute;top:7px;right:7px;width:18px;height:18px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--amber);padding:0;}
+.memo-item-del:hover{background:rgba(0,0,0,0.08);}
+.memo-item-del svg{width:9px;height:9px;}
+.memo-input-row{display:flex;gap:6px;}
+.memo-textarea{flex:1;padding:9px 11px;border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;font-family:inherit;background:var(--surface);color:var(--text);outline:none;resize:none;line-height:1.5;min-height:38px;max-height:120px;}
+.memo-textarea:focus{border-color:var(--amber);}
+.memo-add-btn{padding:0 13px;background:var(--amber-light);color:var(--amber);border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;flex-shrink:0;align-self:flex-end;height:38px;}
+.memo-add-btn:hover{opacity:0.85;}
+
+/* ── 월별 아카이브 ── */
+.archive-month{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);margin-bottom:12px;overflow:hidden;}
+.archive-month-header{padding:14px 16px;display:flex;align-items:center;justify-content:space-between;cursor:pointer;user-select:none;}
+.archive-month-header:hover{background:var(--surface2);}
+.archive-month-title{font-size:14px;font-weight:500;}
+.archive-month-count{font-size:12px;color:var(--text3);}
+.archive-chevron{transition:transform 0.2s;}
+.archive-chevron.open{transform:rotate(180deg);}
+.archive-tasks{display:none;border-top:1px solid var(--border);}
+.archive-tasks.open{display:block;}
+.archive-task-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);}
+.archive-task-row:last-child{border-bottom:none;}
+.archive-check{width:16px;height:16px;border-radius:50%;background:var(--teal-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.archive-check svg{width:8px;height:8px;}
+.archive-task-title{font-size:13px;color:var(--text2);text-decoration:line-through;flex:1;}
+.archive-task-meta{font-size:11px;color:var(--text3);}
+.archive-empty{padding:20px;text-align:center;color:var(--text3);font-size:13px;}
+.archive-notice{background:var(--teal-light);border:1px solid #9FE1CB;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--teal);line-height:1.6;}
+
+/* ── 담당자 ── */
+.contact-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:14px;margin-bottom:10px;display:flex;align-items:center;gap:12px;}
+.c-avatar{width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:16px;flex-shrink:0;}
+.contact-info{flex:1;}
+.contact-name{font-size:15px;font-weight:500;}
+.contact-role{font-size:12px;color:var(--text2);margin-top:2px;}
+.contact-stats{display:flex;gap:10px;margin-top:8px;}
+.c-stat{font-size:12px;color:var(--text2);}
+.c-stat strong{color:var(--text);font-weight:600;}
+.monitor-toggle{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);cursor:pointer;}
+.monitor-toggle.on{background:var(--teal-light);border-color:var(--teal-mid);color:var(--teal);}
+.mdot{width:7px;height:7px;border-radius:50%;background:var(--text3);}
+.mdot.on{background:var(--teal-mid);}
+
+/* ── 파일 업로드 패널 ── */
+.upload-panel{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.upload-panel h3{font-size:15px;font-weight:500;margin-bottom:4px;}
+.upload-panel p{font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.5;}
+.upload-drop-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px 16px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;}
+.upload-drop-zone:hover,.upload-drop-zone.drag-over{border-color:var(--purple);background:var(--purple-light);}
+.upload-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-drop-icon{width:40px;height:40px;background:var(--purple-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;}
+.upload-drop-icon svg{width:18px;height:18px;}
+.upload-drop-text{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.upload-drop-sub{font-size:12px;color:var(--text3);}
+.upload-file-formats{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
+.fmt-badge{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text3);}
+.upload-preview{display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:14px;}
+.upload-preview.show{display:block;}
+.upload-file-info{display:flex;align-items:center;gap:10px;background:var(--purple-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;}
+.upload-file-icon{width:32px;height:32px;background:var(--purple);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.upload-file-icon svg{width:16px;height:16px;}
+.upload-file-name{font-size:13px;font-weight:500;color:var(--purple);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.upload-file-size{font-size:11px;color:var(--text3);flex-shrink:0;}
+.upload-remove-btn{width:24px;height:24px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--purple);flex-shrink:0;}
+.upload-remove-btn:hover{background:rgba(83,74,183,0.15);}
+.upload-playback-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.upload-play-btn{width:36px;height:36px;border-radius:50%;background:var(--purple-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.upload-play-btn svg{width:14px;height:14px;}
+.upload-bar-wrap{flex:1;height:4px;background:var(--border);border-radius:2px;cursor:pointer;}
+.upload-bar{height:4px;background:var(--purple);border-radius:2px;width:0%;transition:width 0.1s;}
+.upload-time{font-size:12px;color:var(--text3);min-width:36px;text-align:right;}
+.upload-name-row{display:flex;gap:8px;margin-bottom:10px;}
+.upload-analyze-btn{width:100%;padding:11px;background:var(--purple);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;}
+.upload-analyze-btn:hover{opacity:0.88;}
+.upload-analyze-btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+/* ── 복구 파일 목록 ── */
+.restore-file-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:7px;cursor:pointer;transition:all 0.15s;}
+.restore-file-item:hover{border-color:var(--coral);background:var(--coral-light);}
+.restore-file-icon{width:32px;height:32px;background:var(--surface2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;}
+.restore-file-info{flex:1;min-width:0;}
+.restore-file-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.restore-file-date{font-size:11px;color:var(--text3);margin-top:2px;}
+.restore-file-btn{font-size:12px;padding:5px 10px;background:var(--coral-light);color:var(--coral);border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:500;flex-shrink:0;}
+.restore-file-btn:hover{opacity:0.85;}
+.restore-confirm{background:var(--red-light);border:1px solid #F09595;border-radius:var(--radius-sm);padding:12px 14px;margin-top:8px;}
+.restore-confirm p{font-size:13px;color:var(--red);margin-bottom:10px;line-height:1.5;}
+.restore-confirm-btns{display:flex;gap:8px;}
+.restore-confirm-btns button{flex:1;padding:9px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;border:none;}
+.restore-ok{background:var(--red-mid);color:white;}
+.restore-cancel{background:var(--surface2);color:var(--text2);}
+
+/* ── 구글 드라이브 설정 배너 ── */
+.gdrive-banner{background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;}
+.gdrive-banner-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:7px;}
+.gdrive-banner-title svg{width:16px;height:16px;flex-shrink:0;}
+.gdrive-banner p{font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.55;}
+.gdrive-status{display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 10px;border-radius:var(--radius-sm);margin-bottom:10px;}
+.gdrive-status.disconnected{background:var(--surface2);color:var(--text3);}
+.gdrive-status.connected{background:var(--teal-light);color:var(--teal);}
+.gdrive-status.error{background:var(--red-light);color:var(--red);}
+.gdrive-connect-btn{width:100%;padding:9px;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;}
+.gdrive-connect-btn.sign-in{background:#4285F4;color:white;}
+.gdrive-connect-btn.sign-in:hover{opacity:0.9;}
+.gdrive-connect-btn.sign-out{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
+.gdrive-connect-btn.sign-out:hover{background:var(--red-light);color:var(--red);border-color:var(--red-light);}
+.gdrive-path-info{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6;}
+.gdrive-path-info span{background:var(--surface2);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11px;}
+/* 저장 상태 표시 */
+.save-indicator{display:inline-flex;align-items:center;gap:4px;font-size:11px;padding:3px 8px;border-radius:10px;margin-left:6px;}
+.save-indicator.saving{background:var(--amber-light);color:var(--amber);}
+.save-indicator.saved{background:var(--teal-light);color:var(--teal);}
+.save-indicator.error{background:var(--red-light);color:var(--red);}
+.save-indicator svg{width:10px;height:10px;}
+
+/* ── 토스트 알림 ── */
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a18;color:white;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap;pointer-events:none;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="header">
+    <div class="header-top">
+      <h1>통화 업무관리</h1>
+      <span class="status-badge">● 감지 중</span>
+    </div>
+    <div class="tabs">
+      <button class="tab active" onclick="showPage('analyze',this)">분석</button>
+      <button class="tab" onclick="showPage('tasks',this)">업무목록</button>
+      <button class="tab" onclick="showPage('archive',this)">월별정리</button>
+      <button class="tab" onclick="showPage('contacts',this)">담당자</button>
+      <button class="tab" onclick="showPage('settings',this)">설정</button>
+    </div>
+  </div>
+
+  <div class="section">
+
+    <!-- ═══════ 분석 탭 ═══════ -->
+    <div class="page active" id="page-analyze">
+
+      <div class="api-banner" id="api-banner">
+        <div class="api-banner-title">🔑 Claude API 키 (선택사항)</div>
+        <p>없어도 됩니다 — 데모 모드로 바로 체험 가능해요.<br>실제 AI 분석은 <b>console.anthropic.com</b>에서 키를 받아 입력하세요.</p>
+        <div class="api-row">
+          <input class="api-input" id="api-key-input" type="password" placeholder="sk-ant-..." />
+          <button class="api-save-btn" onclick="saveApiKey()">저장</button>
+        </div>
+      </div>
+
+      <!-- 음성 녹음 -->
+      <div class="voice-panel">
+        <h3>🎙 직접 음성 녹음</h3>
+        <p>빨간 버튼을 눌러 업무 지시를 말하면<br>AI가 할 일을 자동으로 추출해요.</p>
+        <div class="rec-btn-wrap">
+          <button class="rec-btn idle" id="rec-btn" onclick="toggleRecording()">
+            <svg class="rec-icon" id="icon-mic" viewBox="0 0 24 24" fill="none" stroke="#E24B4A" stroke-width="2" stroke-linecap="round">
+              <rect x="9" y="2" width="6" height="12" rx="3"/>
+              <path d="M5 10a7 7 0 0014 0"/>
+              <line x1="12" y1="19" x2="12" y2="23"/>
+              <line x1="8" y1="23" x2="16" y2="23"/>
+            </svg>
+            <svg class="rec-icon" id="icon-stop" style="display:none" viewBox="0 0 24 24" fill="white">
+              <rect x="6" y="6" width="12" height="12" rx="2"/>
+            </svg>
+          </button>
+          <div class="rec-status" id="rec-status">버튼을 눌러 녹음 시작</div>
+          <div class="rec-timer" id="rec-timer">00:00</div>
+        </div>
+        <div class="waveform-wrap" id="waveform-wrap">
+          <canvas id="waveform-canvas"></canvas>
+        </div>
+        <div class="rec-result" id="rec-result">
+          <div class="transcript-label" style="margin-bottom:10px">녹음 완료</div>
+          <div class="playback-row">
+            <button class="play-btn" onclick="togglePlay()">
+              <svg id="play-icon" viewBox="0 0 14 14" fill="#0F6E56"><polygon points="3,2 12,7 3,12"/></svg>
+            </button>
+            <div class="playback-bar-wrap" onclick="seekAudio(event)">
+              <div class="playback-bar" id="playback-bar"></div>
+            </div>
+            <span class="playback-time" id="playback-time">0:00</span>
+          </div>
+          <div class="name-row">
+            <input class="name-input" id="voice-name" placeholder="발신자 이름 (예: 김민준)" />
+            <button class="discard-btn" onclick="discardRec()">삭제</button>
+          </div>
+          <!-- ★ 새 기능: 파일 저장 버튼 -->
+          <button class="save-audio-btn" onclick="saveAudioFile()">💾 녹음 파일 저장 (다운로드)</button>
+          <button class="analyze-voice-btn" id="analyze-voice-btn" onclick="analyzeVoice()">AI로 업무지시 분석하기</button>
+        </div>
+      </div>
+
+      <!-- 📂 녹음 파일 업로드 패널 -->
+      <div class="upload-panel">
+        <h3>📂 녹음 파일 불러오기</h3>
+        <p>저장된 녹음 파일을 불러와서 AI로 분석할 수 있어요.<br>mp3, m4a, wav, webm, ogg 등 대부분의 형식을 지원해요.</p>
+
+        <div class="upload-drop-zone" id="upload-drop-zone"
+          ondragover="handleDragOver(event)"
+          ondragleave="handleDragLeave(event)"
+          ondrop="handleDrop(event)">
+          <input type="file" id="upload-file-input" accept="audio/*,video/webm"
+            onchange="handleFileSelect(event)" />
+          <div class="upload-drop-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="#534AB7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+              <polyline points="17 8 12 3 7 8"/>
+              <line x1="12" y1="3" x2="12" y2="15"/>
+            </svg>
+          </div>
+          <div class="upload-drop-text">파일을 여기에 끌어다 놓거나</div>
+          <div class="upload-drop-sub">탭해서 파일 선택</div>
+          <div class="upload-file-formats">
+            <span class="fmt-badge">mp3</span>
+            <span class="fmt-badge">m4a</span>
+            <span class="fmt-badge">wav</span>
+            <span class="fmt-badge">webm</span>
+            <span class="fmt-badge">ogg</span>
+            <span class="fmt-badge">aac</span>
+          </div>
+        </div>
+
+        <!-- 파일 선택 후 미리보기 -->
+        <div class="upload-preview" id="upload-preview">
+          <div class="upload-file-info" id="upload-file-info">
+            <div class="upload-file-icon">
+              <svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round">
+                <rect x="2" y="1" width="12" height="14" rx="2"/>
+                <path d="M6 7l2-2 2 2M8 5v6"/>
+              </svg>
+            </div>
+            <div class="upload-file-name" id="upload-file-name">파일명.mp3</div>
+            <div class="upload-file-size" id="upload-file-size">0 KB</div>
+            <button class="upload-remove-btn" onclick="removeUploadedFile()">
+              <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
+            </button>
+          </div>
+
+          <div class="upload-playback-row">
+            <button class="upload-play-btn" onclick="toggleUploadPlay()" id="upload-play-btn">
+              <svg id="upload-play-icon" viewBox="0 0 14 14" fill="#534AB7"><polygon points="3,2 12,7 3,12"/></svg>
+            </button>
+            <div class="upload-bar-wrap" onclick="seekUploadAudio(event)">
+              <div class="upload-bar" id="upload-bar"></div>
+            </div>
+            <span class="upload-time" id="upload-time">0:00</span>
+          </div>
+
+          <div class="upload-name-row">
+            <input class="name-input" id="upload-sender-name" placeholder="발신자 이름 (예: 김민준)" />
+          </div>
+          <button class="upload-analyze-btn" id="upload-analyze-btn" onclick="analyzeUploadedFile()">
+            AI로 업무지시 분석하기
+          </button>
+        </div>
+      </div>
+
+      <div class="divider"><div class="divider-line"></div><div class="divider-text">샘플 통화로 기능 체험</div><div class="divider-line"></div></div>
+      <div class="demo-calls">
+        <button class="demo-call" onclick="analyzeCall(0)">
+          <div class="call-avatar" style="background:#E1F5EE;color:#0F6E56">김</div>
+          <div class="call-info"><div class="call-name">김민준 (개발팀장)<span class="demo-badge">데모</span></div><div class="call-meta">오늘 14:32 · 방금 종료</div></div>
+          <div class="call-duration">8분 22초</div>
+        </button>
+        <button class="demo-call" onclick="analyzeCall(1)">
+          <div class="call-avatar" style="background:#EEEDFE;color:#534AB7">이</div>
+          <div class="call-info"><div class="call-name">이서연 (마케팅팀)<span class="demo-badge">데모</span></div><div class="call-meta">오늘 11:15 · 녹음 대기</div></div>
+          <div class="call-duration">5분 41초</div>
+        </button>
+        <button class="demo-call" onclick="analyzeCall(2)">
+          <div class="call-avatar" style="background:#FAEEDA;color:#854F0B">박</div>
+          <div class="call-info"><div class="call-name">박지훈 (영업팀)<span class="demo-badge">데모</span></div><div class="call-meta">어제 17:08 · 녹음 대기</div></div>
+          <div class="call-duration">12분 05초</div>
+        </button>
+      </div>
+      <div id="analysis-result"></div>
+    </div>
+
+    <!-- ═══════ 업무목록 탭 ═══════ -->
+    <div class="page" id="page-tasks">
+
+      <!-- ★ 새 기능: 직접 업무 추가 폼 -->
+      <div class="add-task-form">
+        <h3>✏️ 업무 직접 추가</h3>
+        <div class="form-field">
+          <label class="form-label">업무 내용 *</label>
+          <input class="form-input" id="f-title" placeholder="예: 보고서 초안 작성" />
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">담당자</label>
+            <input class="form-input" id="f-assignee" placeholder="이름" />
+          </div>
+          <div class="form-field">
+            <label class="form-label">마감일</label>
+            <input class="form-input" id="f-deadline" placeholder="예: 금요일" />
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-field">
+            <label class="form-label">우선순위</label>
+            <select class="form-select" id="f-priority">
+              <option value="high">🔴 높음</option>
+              <option value="mid" selected>🟡 보통</option>
+              <option value="low">🔵 낮음</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label class="form-label">출처</label>
+            <input class="form-input" id="f-source" placeholder="예: 회의, 메모" />
+          </div>
+        </div>
+        <button class="form-submit" onclick="addManualTask()">업무 추가하기</button>
+      </div>
+
+      <div class="section-title">업무 목록</div>
+      <div class="filter-row">
+        <button class="filter-btn active" onclick="filterTasks('all',this)">전체</button>
+        <button class="filter-btn" onclick="filterTasks('wait',this)">대기</button>
+        <button class="filter-btn" onclick="filterTasks('ing',this)">진행중</button>
+        <button class="filter-btn" onclick="filterTasks('done',this)">완료</button>
+      </div>
+      <div id="task-list"></div>
+    </div>
+
+    <!-- ═══════ 월별 정리 탭 ★ 새 기능 ═══════ -->
+    <div class="page" id="page-archive">
+      <div class="archive-notice">
+        📅 매월 1일이 되면 이전 달 완료 업무가 자동으로 여기에 정리됩니다.<br>
+        아래 버튼으로 지금 바로 테스트할 수 있어요.
+      </div>
+      <button style="width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius-sm);font-size:13px;cursor:pointer;font-family:inherit;margin-bottom:16px;color:var(--text2);" onclick="runArchiveNow()">
+        🗂 지금 완료 업무 아카이브 실행 (테스트)
+      </button>
+      <div id="archive-list"></div>
+    </div>
+
+    <!-- ═══════ 담당자 탭 ═══════ -->
+    <div class="page" id="page-contacts">
+      <div class="section-title">모니터링 담당자</div>
+      <div id="contact-list"></div>
+    </div>
+
+    <!-- ═══════ 설정 탭 ═══════ -->
+    <div class="page" id="page-settings">
+      <div class="section-title">구글 드라이브 연동</div>
+
+      <div class="gdrive-banner">
+        <div class="gdrive-banner-title">
+          <svg viewBox="0 0 24 24" width="16" height="16">
+            <path d="M6 2L2 19h6.5L12 13l3.5 6H22L12 2z" fill="#4285F4" opacity="0.2"/>
+            <path d="M8.5 19H2l5-8.5L12 2l4 7" stroke="#4285F4" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+            <path d="M15.5 19H22l-5-8.5" stroke="#34A853" stroke-width="1.5" stroke-linejoin="round" fill="none"/>
+            <path d="M2 19h20" stroke="#EA4335" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+          </svg>
+          구글 드라이브 자동 저장
+        </div>
+        <p>연결하면 업로드한 녹음 파일과 업무 목록·월별 정리가<br>구글 드라이브에 자동으로 저장됩니다.</p>
+
+        <div class="gdrive-status disconnected" id="gdrive-status">
+          <svg width="8" height="8" viewBox="0 0 8 8"><circle cx="4" cy="4" r="4" fill="currentColor"/></svg>
+          <span id="gdrive-status-text">연결 안 됨</span>
+        </div>
+        <button class="gdrive-connect-btn sign-in" id="gdrive-btn" onclick="gdriveSignIn()">
+          <svg width="15" height="15" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="white"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="white" opacity="0.85"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l3.66-2.84z" fill="white" opacity="0.7"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="white" opacity="0.55"/></svg>
+          Google 계정으로 로그인
+        </button>
+        <div class="gdrive-path-info" id="gdrive-path-info" style="display:none">
+          🎙 녹음 파일 → <span>Work/Total/Record/</span><br>
+          📋 업무 목록 → <span>Work/Total/List/</span><br>
+          📁 월별 정리 → <span>Work/Total/List/</span>
+        </div>
+      </div>
+
+      <!-- Client ID 입력 -->
+      <div class="gdrive-banner" id="gcp-guide">
+        <div class="gdrive-banner-title" style="color:var(--amber)">
+          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" width="16" height="16"><circle cx="8" cy="8" r="7"/><line x1="8" y1="5" x2="8" y2="8"/><circle cx="8" cy="11" r="0.5" fill="currentColor"/></svg>
+          최초 1회 설정 필요
+        </div>
+        <p style="margin-bottom:10px;">구글 드라이브 연동을 위해 OAuth Client ID가 필요해요.</p>
+        <div class="form-field" style="margin-bottom:8px;">
+          <label class="form-label">Google OAuth Client ID</label>
+          <input class="form-input" id="gcp-client-id" placeholder="xxxx.apps.googleusercontent.com" style="font-size:12px;" />
+        </div>
+        <button class="form-submit" onclick="saveGcpConfig()" style="margin-top:0;font-size:13px;padding:9px;">저장</button>
+        <div style="margin-top:12px;padding:10px;background:var(--surface2);border-radius:var(--radius-sm);">
+          <div style="font-size:12px;font-weight:500;margin-bottom:6px;">📋 Client ID 발급 방법 (무료, 5분)</div>
+          <div style="font-size:12px;color:var(--text2);line-height:1.9;">
+            1. <b>console.cloud.google.com</b> 접속<br>
+            2. 새 프로젝트 만들기<br>
+            3. API 및 서비스 → <b>Google Drive API 사용 설정</b><br>
+            4. 사용자 인증 정보 → <b>OAuth 2.0 클라이언트 ID 만들기</b><br>
+            5. 유형: <b>웹 애플리케이션</b><br>
+            6. 승인된 JavaScript 출처에 이 앱 주소 추가<br>
+            7. 생성된 클라이언트 ID 복사 후 위에 붙여넣기
+          </div>
+        </div>
+      </div>
+
+      <!-- 수동 저장 -->
+      <div class="section-title">지금 바로 저장</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:16px;">
+        <button class="save-audio-btn" onclick="gdriveSaveTasksManual()">📋 업무 목록 Drive에 저장</button>
+        <button class="save-audio-btn" onclick="gdriveSaveArchiveManual()">📁 월별 정리 Drive에 저장</button>
+      </div>
+
+      <!-- ★ 복구 섹션 -->
+      <div class="section-title">Drive에서 복구</div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:6px;">
+        <button class="save-audio-btn" style="color:var(--coral);border-color:var(--coral);" onclick="openRestorePanel('tasks')">
+          🔄 업무 목록 복구하기
+        </button>
+        <button class="save-audio-btn" style="color:var(--coral);border-color:var(--coral);" onclick="openRestorePanel('archive')">
+          🔄 월별 정리 복구하기
+        </button>
+      </div>
+
+      <!-- 복구 파일 선택 패널 (기본 숨김) -->
+      <div id="restore-panel" style="display:none;margin-top:8px;">
+        <div class="gdrive-banner" style="padding:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+            <div style="font-size:13px;font-weight:500;" id="restore-panel-title">백업 파일 선택</div>
+            <button onclick="closeRestorePanel()" style="background:none;border:none;cursor:pointer;font-size:18px;color:var(--text3);line-height:1;">×</button>
+          </div>
+          <div id="restore-file-list">
+            <div style="display:flex;align-items:center;gap:8px;padding:10px 0;font-size:13px;color:var(--text2);">
+              <div class="spinner"></div> Drive에서 파일 목록을 가져오는 중...
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- 토스트 알림 -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* ══════════════════════════════════════════════
+   💾 localStorage 키 상수
+   (앱을 닫아도 데이터가 유지됩니다)
+══════════════════════════════════════════════ */
+const LS_TASKS   = 'ctm_tasks';
+const LS_ARCHIVE = 'ctm_archive';
+const LS_LAST_RUN= 'ctm_last_archive';
+
+/* ══════════════════════════════════════════════
+   데이터
+══════════════════════════════════════════════ */
+const SAMPLE_CALLS = [
+  { name:"김민준", role:"개발팀장", color:"#E1F5EE", textColor:"#0F6E56", initial:"김", time:"오늘 14:32",
+    transcript:`안녕하세요, 김민준입니다. 이번 주 금요일까지 로그인 버그 꼭 수정해주세요. 다음 주 월요일에 신규 기능 배포 일정 확인해서 보고해주시고요. API 문서 업데이트도 이번 주 내로 부탁드립니다. 박 대리한테 디자인 시안 전달도 해주세요, 수요일까지.`,
+    demoTasks:[
+      {title:"로그인 버그 수정",             deadline:"이번 주 금요일", priority:"high"},
+      {title:"신규 기능 배포 일정 보고",      deadline:"다음 주 월요일", priority:"mid"},
+      {title:"API 문서 업데이트",             deadline:"이번 주 내",   priority:"mid"},
+      {title:"박 대리에게 디자인 시안 전달",  deadline:"수요일",        priority:"low"},
+    ]
+  },
+  { name:"이서연", role:"마케팅팀", color:"#EEEDFE", textColor:"#534AB7", initial:"이", time:"오늘 11:15",
+    transcript:`SNS 콘텐츠 초안 목요일까지 보내주세요. 인스타그램이랑 유튜브 둘 다요. 경쟁사 분석 리포트는 다음 주 수요일까지 부탁드려요. 콘텐츠 캘린더 공유도 부탁드립니다.`,
+    demoTasks:[
+      {title:"SNS 콘텐츠 초안 (인스타·유튜브)", deadline:"목요일",        priority:"high"},
+      {title:"경쟁사 분석 리포트",               deadline:"다음 주 수요일", priority:"mid"},
+      {title:"콘텐츠 캘린더 공유",               deadline:"미정",          priority:"low"},
+    ]
+  },
+  { name:"박지훈", role:"영업팀", color:"#FAEEDA", textColor:"#854F0B", initial:"박", time:"어제 17:08",
+    transcript:`A사 제안서 내일까지 완성해주세요. B사 미팅 준비 자료도 이번 주 목요일까지요. 계약서 검토는 법무팀이랑 협의해서 금요일까지 끝내주시고요.`,
+    demoTasks:[
+      {title:"A사 제안서 완성",          deadline:"내일",          priority:"high"},
+      {title:"B사 미팅 준비 자료",       deadline:"이번 주 목요일", priority:"high"},
+      {title:"계약서 검토 (법무팀 협의)", deadline:"금요일",        priority:"mid"},
+    ]
+  }
+];
+
+const contacts = [
+  {name:"김민준",role:"개발팀장",color:"#E1F5EE",textColor:"#0F6E56",monitor:true, calls:3,tasks:5},
+  {name:"이서연",role:"마케팅팀", color:"#EEEDFE",textColor:"#534AB7",monitor:true, calls:2,tasks:3},
+  {name:"박지훈",role:"영업팀",  color:"#FAEEDA",textColor:"#854F0B",monitor:true, calls:4,tasks:7},
+  {name:"최수진",role:"기획팀",  color:"#E6F1FB",textColor:"#185FA5",monitor:false,calls:1,tasks:2},
+];
+
+/* ── 업무 & 아카이브 로드/저장 ── */
+let tasks    = JSON.parse(localStorage.getItem(LS_TASKS)   || '[]');
+let archive  = JSON.parse(localStorage.getItem(LS_ARCHIVE) || '{}');
+let idCounter= tasks.length ? Math.max(...tasks.map(t=>t.id)) + 1 : 1;
+let curFilter= 'all';
+let pendingTasks = [];
+let savedApiKey  = '';
+
+function saveTasks()   { localStorage.setItem(LS_TASKS,   JSON.stringify(tasks));   }
+function saveArchive() { localStorage.setItem(LS_ARCHIVE, JSON.stringify(archive)); }
+
+/* ══════════════════════════════════════════════
+   🗂 매월 1일 자동 아카이브
+══════════════════════════════════════════════ */
+function checkMonthlyArchive() {
+  const now      = new Date();
+  const today    = `${now.getFullYear()}-${now.getMonth()+1}-${now.getDate()}`;
+  const lastRun  = localStorage.getItem(LS_LAST_RUN) || '';
+
+  // 1일이고 오늘 아직 실행 안 했으면 실행
+  if (now.getDate() === 1 && lastRun !== today) {
+    runArchive();
+    localStorage.setItem(LS_LAST_RUN, today);
+  }
+}
+
+function runArchiveNow() {
+  // 테스트용 — 날짜 관계없이 즉시 실행
+  const count = runArchive();
+  if (count === 0) {
+    toast('완료된 업무가 없어요. 업무를 완료 상태로 바꾼 뒤 다시 눌러보세요.');
+  } else {
+    toast(`✅ ${count}개 완료 업무를 월별 정리로 이동했습니다.`);
+    renderTasks();
+    renderArchive();
+  }
+}
+
+function runArchive() {
+  const doneTasks = tasks.filter(t => t.status === 'done');
+  if (!doneTasks.length) return 0;
+
+  doneTasks.forEach(t => {
+    // 완료된 날짜 기준으로 월 키 생성 (예: "2025년 3월")
+    const d    = new Date(t.doneAt || Date.now());
+    const key  = `${d.getFullYear()}년 ${d.getMonth()+1}월`;
+    if (!archive[key]) archive[key] = [];
+    archive[key].push(t);
+  });
+
+  // 현재 목록에서 완료된 업무 제거
+  tasks = tasks.filter(t => t.status !== 'done');
+  saveTasks();
+  saveArchive();
+  // ☁️ Drive 연결 중이면 자동 저장
+  if (gdAccessToken) { gdriveSaveTasks(); gdriveSaveArchive(); }
+  return doneTasks.length;
+}
+
+/* ══════════════════════════════════════════════
+   🔑 API 키
+══════════════════════════════════════════════ */
+function saveApiKey() {
+  const val = document.getElementById('api-key-input').value.trim();
+  if (!val.startsWith('sk-ant-')) {
+    alert("API 키는 'sk-ant-'로 시작해야 합니다.\n없으면 그냥 닫으세요 — 데모 모드로 동작해요.");
+    return;
+  }
+  savedApiKey = val;
+  const b = document.getElementById('api-banner');
+  b.className = 'api-banner api-ok';
+  b.innerHTML = `<div class="api-banner-title">✅ API 키 저장됨 — 실제 AI 분석 모드</div>
+    <p style="font-size:12px;color:var(--text2)">이제 실제 Claude AI가 통화를 분석합니다.<br>
+    <span style="cursor:pointer;text-decoration:underline;color:var(--text3)" onclick="clearApiKey()">키 삭제하고 데모 모드로 돌아가기</span></p>`;
+}
+function clearApiKey() {
+  savedApiKey = '';
+  document.getElementById('api-banner').className = 'api-banner';
+  document.getElementById('api-banner').innerHTML = `
+    <div class="api-banner-title">🔑 Claude API 키 (선택사항)</div>
+    <p>없어도 됩니다 — 데모 모드로 바로 체험 가능해요.<br>실제 AI 분석은 <b>console.anthropic.com</b>에서 키를 받아 입력하세요.</p>
+    <div class="api-row">
+      <input class="api-input" id="api-key-input" type="password" placeholder="sk-ant-..." />
+      <button class="api-save-btn" onclick="saveApiKey()">저장</button>
+    </div>`;
+}
+
+/* ══════════════════════════════════════════════
+   🎙 음성 녹음
+══════════════════════════════════════════════ */
+let recorder=null,chunks=[],recBlob=null,player=null;
+let isRec=false,timerID=null,secs=0,animID=null,analyser=null;
+
+async function toggleRecording() {
+  if (!isRec) await startRec(); else stopRec();
+}
+async function startRec() {
+  let stream;
+  try { stream = await navigator.mediaDevices.getUserMedia({audio:true}); }
+  catch(e) { alert("마이크 권한이 필요합니다.\n브라우저 주소창 옆 🔒 아이콘 → 마이크 허용"); return; }
+
+  const ctx = new (window.AudioContext||window.webkitAudioContext)();
+  analyser = ctx.createAnalyser(); analyser.fftSize=64;
+  ctx.createMediaStreamSource(stream).connect(analyser);
+  drawBars();
+
+  chunks=[]; recorder=new MediaRecorder(stream);
+  recorder.ondataavailable = e => chunks.push(e.data);
+  recorder.onstop = () => {
+    recBlob = new Blob(chunks, {type:'audio/webm'});
+    player  = new Audio(URL.createObjectURL(recBlob));
+    player.ontimeupdate = updateBar;
+    player.onended = () => setPlayIcon(false);
+    cancelAnimationFrame(animID);
+    showRecResult();
+  };
+  recorder.start();
+  isRec=true; secs=0;
+  setRecUI('recording');
+  document.getElementById('rec-result').classList.remove('show');
+  document.getElementById('waveform-wrap').classList.add('show');
+  timerID = setInterval(()=>{
+    secs++;
+    document.getElementById('rec-timer').textContent =
+      String(Math.floor(secs/60)).padStart(2,'0')+':'+String(secs%60).padStart(2,'0');
+  },1000);
+}
+function stopRec() {
+  recorder.stop();
+  recorder.stream.getTracks().forEach(t=>t.stop());
+  clearInterval(timerID); isRec=false;
+  setRecUI('idle');
+  document.getElementById('rec-status').textContent='저장 중...';
+  document.getElementById('waveform-wrap').classList.remove('show');
+}
+function showRecResult() {
+  document.getElementById('rec-status').textContent='버튼을 눌러 녹음 시작';
+  document.getElementById('rec-timer').style.display='none';
+  document.getElementById('rec-result').classList.add('show');
+}
+function setRecUI(state) {
+  document.getElementById('rec-btn').className='rec-btn '+state;
+  document.getElementById('icon-mic').style.display  = state==='idle'      ?'':'none';
+  document.getElementById('icon-stop').style.display = state==='recording' ?'':'none';
+  const st=document.getElementById('rec-status');
+  st.className='rec-status'+(state==='recording'?' recording':'');
+  if(state==='recording'){st.textContent='녹음 중... 다시 누르면 중지';document.getElementById('rec-timer').style.display='block';}
+}
+function drawBars(){
+  const canvas=document.getElementById('waveform-canvas');
+  const c=canvas.getContext('2d'); canvas.width=canvas.offsetWidth||300; canvas.height=44;
+  const buf=new Uint8Array(analyser.frequencyBinCount);
+  (function frame(){
+    animID=requestAnimationFrame(frame);
+    analyser.getByteFrequencyData(buf); c.clearRect(0,0,canvas.width,canvas.height);
+    const bw=(canvas.width/buf.length)*1.8;
+    buf.forEach((v,i)=>{const h=(v/255)*canvas.height*0.9;c.fillStyle='#1D9E75';c.fillRect(i*bw,canvas.height-h,bw-1,h);});
+  })();
+}
+function togglePlay(){if(!player)return;if(player.paused){player.play();setPlayIcon(true);}else{player.pause();setPlayIcon(false);}}
+function setPlayIcon(p){document.getElementById('play-icon').innerHTML=p?'<rect x="3" y="2" width="3" height="10"/><rect x="8" y="2" width="3" height="10"/>':'<polygon points="3,2 12,7 3,12"/>';}
+function updateBar(){if(!player||!player.duration)return;document.getElementById('playback-bar').style.width=(player.currentTime/player.duration*100)+'%';const s=Math.floor(player.currentTime);document.getElementById('playback-time').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0');}
+function seekAudio(e){if(!player||!player.duration)return;const r=e.currentTarget.getBoundingClientRect();player.currentTime=((e.clientX-r.left)/r.width)*player.duration;}
+function discardRec(){recBlob=null;player=null;document.getElementById('rec-result').classList.remove('show');document.getElementById('voice-name').value='';document.getElementById('playback-bar').style.width='0%';document.getElementById('rec-timer').textContent='00:00';}
+
+/* ★ 녹음 파일 저장 (다운로드) ── */
+function saveAudioFile() {
+  if (!recBlob) return;
+  const name = document.getElementById('voice-name').value.trim() || '녹음';
+
+  // 파일명: 녹음_김민준_2025-03-20_14-32.webm
+  const now  = new Date();
+  const date = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const time = `${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+  const filename = `녹음_${name}_${date}_${time}.webm`;
+
+  // 브라우저 다운로드 트리거
+  // → PC: 다운로드 폴더에 저장
+  // → 안드로이드 크롬: 파일 앱 > 다운로드 폴더에 저장
+  //   (안드로이드는 보안상 특정 폴더 직접 지정 불가 — 다운로드 후 파일 앱에서 음성녹음 폴더로 이동 안내)
+  const url = URL.createObjectURL(recBlob);
+  const a   = document.createElement('a');
+  a.href     = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+
+  toast(`💾 "${filename}" 저장됨\n(다운로드 폴더 → 파일 앱에서 음성녹음 폴더로 이동 가능)`);
+}
+
+/* ══════════════════════════════════════════════
+   📂 녹음 파일 업로드 & 분석
+══════════════════════════════════════════════ */
+let uploadedBlob = null;   // 업로드된 파일 (Blob)
+let uploadPlayer = null;   // 업로드 파일 재생용 오디오
+
+/* 파일 선택 (버튼 클릭) */
+function handleFileSelect(e) {
+  const file = e.target.files[0];
+  if (file) loadUploadedFile(file);
+}
+
+/* 파일 드래그 앤 드롭 */
+function handleDragOver(e) {
+  e.preventDefault();
+  document.getElementById('upload-drop-zone').classList.add('drag-over');
+}
+function handleDragLeave(e) {
+  document.getElementById('upload-drop-zone').classList.remove('drag-over');
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById('upload-drop-zone').classList.remove('drag-over');
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('audio/') || (file && file.type === 'video/webm')) {
+    loadUploadedFile(file);
+  } else if (file) {
+    toast('⚠️ 오디오 파일만 업로드할 수 있어요 (mp3, m4a, wav 등)');
+  }
+}
+
+/* 파일 불러오기 공통 처리 */
+function loadUploadedFile(file) {
+  // 파일 크기 표시용 (예: 2.4 MB)
+  const sizeMB = (file.size / (1024 * 1024)).toFixed(1);
+  const sizeStr = file.size > 1024 * 1024 ? `${sizeMB} MB` : `${Math.round(file.size/1024)} KB`;
+
+  // Blob URL 생성해서 오디오 플레이어에 연결
+  uploadedBlob = file;
+  const url = URL.createObjectURL(file);
+  uploadPlayer = new Audio(url);
+  uploadPlayer.ontimeupdate = updateUploadBar;
+  uploadPlayer.onended = () => setUploadPlayIcon(false);
+
+  // UI 업데이트
+  document.getElementById('upload-file-name').textContent = file.name;
+  document.getElementById('upload-file-size').textContent = sizeStr;
+  document.getElementById('upload-bar').style.width = '0%';
+  document.getElementById('upload-time').textContent = '0:00';
+  setUploadPlayIcon(false);
+
+  // 미리보기 영역 펼치기
+  document.getElementById('upload-preview').classList.add('show');
+  document.getElementById('upload-drop-zone').style.opacity = '0.5';
+  toast(`📂 "${file.name}" 불러오기 완료`);
+}
+
+/* 파일 제거 */
+function removeUploadedFile() {
+  if (uploadPlayer) { uploadPlayer.pause(); uploadPlayer = null; }
+  uploadedBlob = null;
+  document.getElementById('upload-preview').classList.remove('show');
+  document.getElementById('upload-drop-zone').style.opacity = '';
+  document.getElementById('upload-file-input').value = '';
+  document.getElementById('upload-sender-name').value = '';
+}
+
+/* 재생 / 일시정지 */
+function toggleUploadPlay() {
+  if (!uploadPlayer) return;
+  if (uploadPlayer.paused) { uploadPlayer.play(); setUploadPlayIcon(true); }
+  else                     { uploadPlayer.pause(); setUploadPlayIcon(false); }
+}
+function setUploadPlayIcon(playing) {
+  document.getElementById('upload-play-icon').innerHTML = playing
+    ? '<rect x="3" y="2" width="3" height="10" fill="#534AB7"/><rect x="8" y="2" width="3" height="10" fill="#534AB7"/>'
+    : '<polygon points="3,2 12,7 3,12" fill="#534AB7"/>';
+}
+function updateUploadBar() {
+  if (!uploadPlayer || !uploadPlayer.duration) return;
+  document.getElementById('upload-bar').style.width = (uploadPlayer.currentTime / uploadPlayer.duration * 100) + '%';
+  const s = Math.floor(uploadPlayer.currentTime);
+  document.getElementById('upload-time').textContent = Math.floor(s/60) + ':' + String(s%60).padStart(2,'0');
+}
+function seekUploadAudio(e) {
+  if (!uploadPlayer || !uploadPlayer.duration) return;
+  const r = e.currentTarget.getBoundingClientRect();
+  uploadPlayer.currentTime = ((e.clientX - r.left) / r.width) * uploadPlayer.duration;
+}
+
+/* 업로드된 파일 AI 분석 */
+async function analyzeUploadedFile() {
+  if (!uploadedBlob) return;
+  const name = document.getElementById('upload-sender-name').value.trim() || '업로드 파일';
+  const btn  = document.getElementById('upload-analyze-btn');
+  btn.disabled = true; btn.textContent = '분석 중...';
+
+  // 분석 결과를 아래 영역에 표시
+  const el = document.getElementById('analysis-result');
+  el.scrollIntoView({ behavior: 'smooth' });
+  el.innerHTML = `
+    <div class="analysis-card">
+      <div class="analysis-header">
+        <div class="caller-avatar" style="background:#EEEDFE;color:#534AB7;font-size:16px">📂</div>
+        <div>
+          <h4>${escHtmlUpload(name)} (파일 업로드)</h4>
+          <div class="atime">${escHtmlUpload(uploadedBlob.name)}</div>
+        </div>
+      </div>
+      <div class="analyzing" id="ai-loading">
+        <div class="spinner"></div>
+        <span>${savedApiKey ? 'AI가 음성을 분석하고 있습니다...' : '데모 분석 중...'}</span>
+      </div>
+      <div id="stream-result"></div>
+    </div>`;
+
+  if (savedApiKey) {
+    try {
+      // 파일을 Base64로 변환
+      const b64 = await new Promise(res => {
+        const r = new FileReader();
+        r.onloadend = () => res(r.result.split(',')[1]);
+        r.readAsDataURL(uploadedBlob);
+      });
+
+      const mimeType = uploadedBlob.type || 'audio/mpeg';
+      const res = await fetch("https://api.anthropic.com/v1/messages", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "x-api-key": savedApiKey,
+          "anthropic-version": "2023-06-01",
+          "anthropic-dangerous-direct-browser-access": "true"
+        },
+        body: JSON.stringify({
+          model: "claude-sonnet-4-20250514",
+          max_tokens: 1000,
+          messages: [{
+            role: "user",
+            content: [
+              { type: "text",
+                text: `"${name}"의 녹음 파일입니다. 업무지시 사항을 추출해주세요.\nJSON으로만 응답: {"transcript":"음성 전사 내용","tasks":[{"title":"업무 제목","deadline":"마감일","priority":"high/mid/low","assignee":"${name}"}]}` },
+              { type: "document",
+                source: { type: "base64", media_type: mimeType, data: b64 } }
+            ]
+          }]
+        })
+      });
+
+      const data = await res.json();
+      document.getElementById('ai-loading').remove();
+
+      let txt = (data.content?.[0]?.text || '').replace(/```json|```/g, '').trim();
+      let parsed; try { parsed = JSON.parse(txt); } catch(e) { parsed = { tasks: [] }; }
+
+      if (parsed.transcript) {
+        document.getElementById('stream-result').insertAdjacentHTML('beforebegin', `
+          <div class="transcript-box">
+            <div class="transcript-label">음성 내용 (자동 전사)</div>
+            <div class="transcript-text">${escHtmlUpload(parsed.transcript)}</div>
+          </div>`);
+      }
+      renderExtracted(parsed.tasks || [], name, `📂 ${name}`, 'upload');
+
+      // ☁️ 분석 완료 후 → 녹음 파일을 Drive Work/Total/Record 에 자동 저장
+      if (gdAccessToken) {
+        toast('☁️ 녹음 파일을 Drive에 저장 중...');
+        const now = new Date();
+        const dateStr = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}`;
+        const driveName = `녹음_${name}_${dateStr}${uploadedBlob.name.match(/\.[^.]+$/) || '.webm'}`;
+        const saved = await gdriveSaveAudioFile(uploadedBlob, driveName);
+        if (saved) toast(`☁️ "${driveName}" → Drive/Work/Total/Record/ 저장 완료`);
+      }
+
+    } catch(err) {
+      document.getElementById('ai-loading').innerHTML =
+        '<div style="padding:0 16px 14px;font-size:13px;color:var(--red)">⚠️ API 오류가 발생했습니다.</div>';
+      console.error(err);
+    }
+  } else {
+    // 데모 모드
+    await delay(2000);
+    document.getElementById('ai-loading').remove();
+    document.getElementById('stream-result').insertAdjacentHTML('beforebegin', `
+      <div class="transcript-box">
+        <div class="transcript-label">데모 모드</div>
+        <div class="transcript-text">실제 AI 분석을 원하면 API 키를 입력해주세요. 아래는 샘플 결과입니다.</div>
+      </div>`);
+    renderExtracted([
+      { title: '업무 현황 보고서 제출',  deadline: '이번 주 금요일', priority: 'high', assignee: name },
+      { title: '다음 주 일정 조율',       deadline: '월요일',         priority: 'mid',  assignee: name },
+      { title: '관련 자료 공유',          deadline: '미정',           priority: 'low',  assignee: name },
+    ], name, `📂 ${name}`, 'upload');
+  }
+
+  btn.disabled = false;
+  btn.textContent = 'AI로 업무지시 분석하기';
+}
+
+// 업로드 파일 분석용 이스케이프 (escHtml과 동일하지만 별도 정의)
+function escHtmlUpload(str) {
+  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+
+async function analyzeVoice() {
+  if(!recBlob) return;
+  const name=document.getElementById('voice-name').value.trim()||'음성 녹음';
+  const btn=document.getElementById('analyze-voice-btn');
+  btn.disabled=true; btn.textContent='분석 중...';
+  const el=document.getElementById('analysis-result');
+  el.scrollIntoView({behavior:'smooth'});
+  el.innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:#FCEBEB;color:#A32D2D;font-size:16px">🎙</div><div><h4>${name} (직접 녹음)</h4><div class="atime">방금 전</div></div></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>분석 중...</span></div><div id="stream-result"></div></div>`;
+
+  if(savedApiKey){
+    try{
+      const b64=await new Promise(res=>{const r=new FileReader();r.onloadend=()=>res(r.result.split(',')[1]);r.readAsDataURL(recBlob);});
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":savedApiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:[{type:"text",text:`"${name}"이 녹음한 업무 지시 음성입니다.\nJSON으로만: {"transcript":"내용","tasks":[{"title":"제목","deadline":"마감일","priority":"high/mid/low","assignee":"${name}"}]}`},{type:"document",source:{type:"base64",media_type:recBlob.type||"audio/webm",data:b64}}]}]})});
+      const data=await res.json();
+      document.getElementById('ai-loading').remove();
+      let txt=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+      let p;try{p=JSON.parse(txt);}catch(e){p={tasks:[]};}
+      if(p.transcript)document.getElementById('stream-result').insertAdjacentHTML('beforebegin',`<div class="transcript-box"><div class="transcript-label">음성 내용</div><div class="transcript-text">${p.transcript}</div></div>`);
+      renderExtracted(p.tasks||[],name,'🎙 직접 녹음','voice');
+    }catch(e){document.getElementById('ai-loading').innerHTML='<div style="padding:0 16px 14px;font-size:13px;color:var(--red)">⚠️ API 오류</div>';}
+  } else {
+    await delay(2000);
+    document.getElementById('ai-loading').remove();
+    document.getElementById('stream-result').insertAdjacentHTML('beforebegin',`<div class="transcript-box"><div class="transcript-label">데모 모드</div><div class="transcript-text">실제 AI 분석을 원하면 API 키를 입력해주세요. 아래는 샘플 결과입니다.</div></div>`);
+    renderExtracted([{title:"업무 보고서 작성",deadline:"이번 주 금요일",priority:"high",assignee:name},{title:"팀 미팅 자료 준비",deadline:"내일",priority:"mid",assignee:name}],name,'🎙 직접 녹음','voice');
+  }
+  btn.disabled=false; btn.textContent='AI로 업무지시 분석하기';
+}
+
+async function analyzeCall(idx){
+  const c=SAMPLE_CALLS[idx];
+  const el=document.getElementById('analysis-result');
+  el.scrollIntoView({behavior:'smooth'});
+  el.innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:${c.color};color:${c.textColor}">${c.initial}</div><div><h4>${c.name} (${c.role})</h4><div class="atime">${c.time}</div></div></div><div class="transcript-box"><div class="transcript-label">통화 내용 (STT)</div><div class="transcript-text">${c.transcript}</div></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>${savedApiKey?'AI 분석 중...':'데모 분석 중...'}</span></div><div id="stream-result"></div></div>`;
+
+  if(savedApiKey){
+    try{
+      const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"Content-Type":"application/json","x-api-key":savedApiKey,"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},body:JSON.stringify({model:"claude-sonnet-4-20250514",max_tokens:1000,messages:[{role:"user",content:`발신자:${c.name}(${c.role})\n통화:"${c.transcript}"\nJSON만: {"tasks":[{"title":"제목","deadline":"마감","priority":"high/mid/low","assignee":"${c.name}"}]}`}]})});
+      const data=await res.json();
+      document.getElementById('ai-loading').remove();
+      let txt=(data.content?.[0]?.text||'').replace(/```json|```/g,'').trim();
+      let p;try{p=JSON.parse(txt);}catch(e){p={tasks:[]};}
+      renderExtracted(p.tasks||[],c.name,`📞 ${c.name}`,'call');
+    }catch(e){document.getElementById('ai-loading').innerHTML='<div style="padding:0 16px 14px;font-size:13px;color:var(--red)">⚠️ API 오류</div>';}
+  } else {
+    await delay(1500);
+    document.getElementById('ai-loading').remove();
+    renderExtracted(c.demoTasks.map(t=>({...t,assignee:c.name})),c.name,`📞 ${c.name}`,'call');
+  }
+}
+
+function delay(ms){return new Promise(r=>setTimeout(r,ms));}
+
+function renderExtracted(rawList,assignee,callerLabel,srcType){
+  pendingTasks=rawList.map(t=>({id:idCounter++,title:t.title,deadline:t.deadline||'미정',priority:t.priority||'mid',assignee:t.assignee||assignee,caller:callerLabel,sourceType:srcType,status:'wait',done:false,createdAt:Date.now(),doneAt:null}));
+  const div=document.getElementById('stream-result');
+  if(!pendingTasks.length){div.innerHTML='<div style="padding:14px 16px;font-size:13px;color:var(--text2)">업무지시를 찾지 못했습니다.</div>';return;}
+  div.innerHTML=`<div class="extracted-tasks"><div class="transcript-label" style="margin-bottom:10px">추출된 업무지시 ${pendingTasks.length}건</div>${pendingTasks.map(t=>`<div class="task-chip"><div class="task-chip-icon"><svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="task-chip-title">${t.title}</div><div class="task-chip-meta">마감: ${t.deadline} · ${{high:'🔴 높음',mid:'🟡 보통',low:'🔵 낮음'}[t.priority]}</div></div></div>`).join('')}<button class="add-btn" id="add-btn" onclick="addExtracted()">업무 목록에 추가하기</button></div>`;
+}
+function addExtracted(){
+  tasks=[...pendingTasks,...tasks]; saveTasks();
+  const b=document.getElementById('add-btn'); b.textContent='✓ 추가됨'; b.disabled=true; b.style.background='var(--teal-mid)';
+  pendingTasks=[]; toast(`✅ ${tasks.length}개 업무가 추가됐어요`);
+  // ☁️ Drive 연결 중이면 자동 저장
+  if (gdAccessToken) gdriveSaveTasks();
+}
+
+/* ══════════════════════════════════════════════
+   ★ 업무 직접 추가
+══════════════════════════════════════════════ */
+function addManualTask() {
+  const title = document.getElementById('f-title').value.trim();
+  if (!title) { toast('업무 내용을 입력해주세요.'); document.getElementById('f-title').focus(); return; }
+  const t = {
+    id:         idCounter++,
+    title:      title,
+    assignee:   document.getElementById('f-assignee').value.trim() || '미지정',
+    deadline:   document.getElementById('f-deadline').value.trim() || '미정',
+    priority:   document.getElementById('f-priority').value,
+    caller:     document.getElementById('f-source').value.trim() || '직접 입력',
+    sourceType: 'manual',
+    status:     'wait',
+    done:       false,
+    createdAt:  Date.now(),
+    doneAt:     null
+  };
+  tasks = [t, ...tasks];
+  saveTasks();
+  // 폼 초기화
+  ['f-title','f-assignee','f-deadline','f-source'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('f-priority').value='mid';
+  renderTasks();
+  toast(`✅ "${t.title}" 추가됨`);
+}
+
+/* ══════════════════════════════════════════════
+   업무 목록 렌더링
+══════════════════════════════════════════════ */
+function filterTasks(f,btn){curFilter=f;document.querySelectorAll('.filter-btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');renderTasks();}
+
+function setStatus(id,status){
+  const t=tasks.find(t=>t.id===id);
+  if(t){t.status=status;t.done=(status==='done');if(status==='done')t.doneAt=Date.now();}
+  saveTasks(); renderTasks();
+}
+
+function deleteTask(id){
+  if(!confirm('이 업무를 삭제할까요?')) return;
+  tasks=tasks.filter(t=>t.id!==id); saveTasks(); renderTasks(); toast('🗑 업무가 삭제됐습니다.');
+}
+
+function renderTasks(){
+  const el=document.getElementById('task-list');
+  const list=curFilter==='all'?tasks:tasks.filter(t=>t.status===curFilter);
+  if(!list.length){el.innerHTML=`<div class="empty">${tasks.length===0?'위 폼으로 업무를 직접 추가하거나\n분석 탭에서 통화를 분석해보세요.':'해당 상태의 업무가 없습니다.'}</div>`;return;}
+  const pLabel={high:'🔴 높음',mid:'🟡 보통',low:'🔵 낮음'};
+  const srcClass={voice:'tag-voice',manual:'tag-manual',call:'tag-source',upload:'tag-upload'};
+  el.innerHTML=list.map(t=>{
+    const memos = t.memos || [];
+    const memoCount = memos.length;
+    return `
+    <div class="task-card" id="card-${t.id}">
+      <div class="task-card-top">
+        <div class="task-check ${t.done?'done':''}" onclick="setStatus(${t.id},'${t.done?'wait':'done'}')">
+          <svg viewBox="0 0 10 10" fill="none" stroke="white" stroke-width="2" stroke-linecap="round"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg>
+        </div>
+        <div class="task-body">
+          <div class="task-title ${t.done?'done':''}">${t.title}</div>
+          <div class="task-tags">
+            <span class="tag tag-person">${t.assignee}</span>
+            <span class="tag tag-due">⏰ ${t.deadline}</span>
+            <span class="tag tag-priority-${{high:'high',mid:'mid',low:'low'}[t.priority]}">${pLabel[t.priority]}</span>
+            <span class="tag ${srcClass[t.sourceType]||'tag-source'}">${t.caller}</span>
+          </div>
+        </div>
+        <button class="task-delete" onclick="deleteTask(${t.id})" title="삭제">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="2" y1="2" x2="12" y2="12"/><line x1="12" y1="2" x2="2" y2="12"/></svg>
+        </button>
+      </div>
+      <div class="task-progress">
+        <button class="prog-btn ${t.status==='wait'?'sel-wait':''}" onclick="setStatus(${t.id},'wait')">대기</button>
+        <button class="prog-btn ${t.status==='ing'?'sel-ing':''}"  onclick="setStatus(${t.id},'ing')">진행중</button>
+        <button class="prog-btn ${t.status==='done'?'sel-done':''}" onclick="setStatus(${t.id},'done')">완료</button>
+      </div>
+
+      <!-- 메모 토글 버튼 -->
+      <button class="task-memo-toggle" onclick="toggleMemo(${t.id})">
+        <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <rect x="1" y="1" width="12" height="12" rx="2"/>
+          <line x1="3.5" y1="4.5" x2="10.5" y2="4.5"/>
+          <line x1="3.5" y1="7" x2="10.5" y2="7"/>
+          <line x1="3.5" y1="9.5" x2="7.5" y2="9.5"/>
+        </svg>
+        메모
+        ${memoCount > 0 ? `<span class="memo-count">${memoCount}</span>` : ''}
+      </button>
+
+      <!-- 메모 영역 (기본 숨김) -->
+      <div class="task-memo-area" id="memo-area-${t.id}">
+        <div class="memo-list" id="memo-list-${t.id}">
+          ${memos.map((m,i) => `
+            <div class="memo-item" id="memo-${t.id}-${i}">
+              <div class="memo-item-text">${escHtml(m.text)}</div>
+              <div class="memo-item-time">${formatMemoTime(m.at)}</div>
+              <button class="memo-item-del" onclick="deleteMemo(${t.id},${i})" title="메모 삭제">
+                <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
+              </button>
+            </div>`).join('')}
+        </div>
+        <div class="memo-input-row">
+          <textarea class="memo-textarea" id="memo-input-${t.id}"
+            placeholder="메모를 입력하세요..."
+            rows="1"
+            oninput="autoResize(this)"
+            onkeydown="memoKeydown(event,${t.id})"></textarea>
+          <button class="memo-add-btn" onclick="addMemo(${t.id})">추가</button>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+/* ══════════════════════════════════════════════
+   📝 메모 기능
+══════════════════════════════════════════════ */
+
+// 메모 영역 열기/닫기
+function toggleMemo(id) {
+  const area = document.getElementById('memo-area-' + id);
+  const isOpen = area.classList.toggle('open');
+  if (isOpen) {
+    // 열릴 때 입력칸에 포커스
+    setTimeout(() => {
+      const inp = document.getElementById('memo-input-' + id);
+      if (inp) inp.focus();
+    }, 50);
+  }
+}
+
+// 메모 추가
+function addMemo(id) {
+  const inp = document.getElementById('memo-input-' + id);
+  const text = inp.value.trim();
+  if (!text) { inp.focus(); return; }
+
+  const t = tasks.find(t => t.id === id);
+  if (!t) return;
+  if (!t.memos) t.memos = [];
+  t.memos.push({ text, at: Date.now() });
+
+  saveTasks();
+  inp.value = '';
+  inp.style.height = '';
+
+  // 목록만 다시 그리기 (전체 렌더 대신 해당 카드만 갱신 → 포커스 유지)
+  refreshMemoList(t);
+  updateMemoToggleCount(t);
+  toast('📝 메모가 추가됐습니다.');
+}
+
+// Ctrl+Enter 또는 Cmd+Enter로도 추가
+function memoKeydown(e, id) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+    e.preventDefault();
+    addMemo(id);
+  }
+}
+
+// 메모 삭제
+function deleteMemo(taskId, memoIdx) {
+  const t = tasks.find(t => t.id === taskId);
+  if (!t || !t.memos) return;
+  t.memos.splice(memoIdx, 1);
+  saveTasks();
+  refreshMemoList(t);
+  updateMemoToggleCount(t);
+  toast('🗑 메모가 삭제됐습니다.');
+}
+
+// 메모 목록만 DOM 갱신 (카드 전체 재렌더 없이)
+function refreshMemoList(t) {
+  const listEl = document.getElementById('memo-list-' + t.id);
+  if (!listEl) return;
+  const memos = t.memos || [];
+  listEl.innerHTML = memos.map((m, i) => `
+    <div class="memo-item">
+      <div class="memo-item-text">${escHtml(m.text)}</div>
+      <div class="memo-item-time">${formatMemoTime(m.at)}</div>
+      <button class="memo-item-del" onclick="deleteMemo(${t.id},${i})" title="메모 삭제">
+        <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
+      </button>
+    </div>`).join('');
+}
+
+// 메모 토글 버튼의 숫자 뱃지 갱신
+function updateMemoToggleCount(t) {
+  const btn = document.querySelector(`#card-${t.id} .task-memo-toggle`);
+  if (!btn) return;
+  const cnt = (t.memos || []).length;
+  const badge = btn.querySelector('.memo-count');
+  if (cnt > 0) {
+    if (badge) badge.textContent = cnt;
+    else btn.insertAdjacentHTML('beforeend', `<span class="memo-count">${cnt}</span>`);
+  } else {
+    if (badge) badge.remove();
+  }
+}
+
+// textarea 자동 높이 조절
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 120) + 'px';
+}
+
+// 시간 포맷 (오늘이면 시:분, 다른 날이면 월/일)
+function formatMemoTime(ts) {
+  const d = new Date(ts);
+  const now = new Date();
+  const isToday = d.toDateString() === now.toDateString();
+  if (isToday) {
+    return d.getHours() + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  return `${d.getMonth()+1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+// HTML 특수문자 이스케이프 (XSS 방지)
+function escHtml(str) {
+  return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+/* ══════════════════════════════════════════════
+   ★ 월별 아카이브 렌더링
+══════════════════════════════════════════════ */
+function renderArchive(){
+  const el=document.getElementById('archive-list');
+  const keys=Object.keys(archive).sort((a,b)=>b.localeCompare(a)); // 최신 월 먼저
+  if(!keys.length){el.innerHTML='<div class="empty">아직 아카이브된 업무가 없어요.<br>업무를 완료 처리한 뒤<br>"아카이브 실행" 버튼을 눌러보세요.</div>';return;}
+  el.innerHTML=keys.map(key=>{
+    const list=archive[key];
+    return`<div class="archive-month">
+      <div class="archive-month-header" onclick="toggleArchiveMonth(this)">
+        <div>
+          <div class="archive-month-title">📁 ${key}</div>
+          <div class="archive-month-count">완료 업무 ${list.length}건</div>
+        </div>
+        <svg class="archive-chevron" width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><polyline points="3,6 8,11 13,6"/></svg>
+      </div>
+      <div class="archive-tasks">
+        ${list.map(t=>`
+          <div class="archive-task-row">
+            <div class="archive-check"><svg viewBox="0 0 8 8" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"><polyline points="1,4 3,6 7,2"/></svg></div>
+            <div class="archive-task-title">${t.title}</div>
+            <div class="archive-task-meta">${t.assignee}</div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+function toggleArchiveMonth(header){
+  const tasks=header.nextElementSibling;
+  const chevron=header.querySelector('.archive-chevron');
+  tasks.classList.toggle('open');
+  chevron.classList.toggle('open');
+}
+
+/* ══════════════════════════════════════════════
+   담당자
+══════════════════════════════════════════════ */
+function renderContacts(){
+  document.getElementById('contact-list').innerHTML=contacts.map((c,i)=>`
+    <div class="contact-card">
+      <div class="c-avatar" style="background:${c.color};color:${c.textColor}">${c.name[0]}</div>
+      <div class="contact-info">
+        <div class="contact-name">${c.name}</div>
+        <div class="contact-role">${c.role}</div>
+        <div class="contact-stats">
+          <span class="c-stat">통화 <strong>${c.calls}</strong>건</span>
+          <span class="c-stat">업무 <strong>${c.tasks}</strong>건</span>
+        </div>
+      </div>
+      <button class="monitor-toggle ${c.monitor?'on':''}" onclick="toggleMonitor(${i})">
+        <div class="mdot ${c.monitor?'on':''}"></div>${c.monitor?'감시중':'감시OFF'}
+      </button>
+    </div>`).join('');
+}
+function toggleMonitor(i){contacts[i].monitor=!contacts[i].monitor;renderContacts();}
+
+/* ── 탭 전환 ── */
+function showPage(id,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  btn.classList.add('active');
+  if(id==='tasks')    renderTasks();
+  if(id==='archive')  renderArchive();
+  if(id==='contacts') renderContacts();
+  if(id==='settings') renderGdriveStatus();
+}
+
+/* ══════════════════════════════════════════════
+   ☁️ 구글 드라이브 연동
+   ── 쉽게 말하면 ──
+   gapi      = 구글이 제공하는 도구 상자
+   tokenClient = "구글 로그인 창을 열어주는 도우미"
+   accessToken = 로그인 후 받는 "출입증" (이게 있어야 Drive에 파일 저장 가능)
+══════════════════════════════════════════════ */
+const GDRIVE_SCOPES  = 'https://www.googleapis.com/auth/drive.file';
+const FOLDER_RECORD  = 'Work/Total/Record';   // 녹음 파일 저장 경로
+const FOLDER_LIST    = 'Work/Total/List';      // 업무 목록·월별 정리 저장 경로
+
+let gdAccessToken = localStorage.getItem('ctm_gd_token') || '';
+let gdClientId    = localStorage.getItem('ctm_gd_client') || '';
+let gdTokenClient = null;
+let gapiReady     = false;
+
+/* gapi(구글 API 도구) 초기화 — 페이지 로드 후 자동 실행 */
+function initGapi() {
+  if (typeof gapi === 'undefined') { setTimeout(initGapi, 500); return; }
+  gapi.load('client', async () => {
+    await gapi.client.init({ discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'] });
+    gapiReady = true;
+    if (gdAccessToken) {
+      gapi.client.setToken({ access_token: gdAccessToken });
+      renderGdriveStatus();
+    }
+  });
+}
+
+/* Client ID 저장 */
+function saveGcpConfig() {
+  const id = document.getElementById('gcp-client-id').value.trim();
+  if (!id || !id.includes('.apps.googleusercontent.com')) {
+    toast('⚠️ 올바른 Client ID를 입력해주세요.'); return;
+  }
+  gdClientId = id;
+  localStorage.setItem('ctm_gd_client', id);
+  toast('✅ Client ID가 저장됐습니다. 이제 로그인 버튼을 눌러보세요.');
+}
+
+/* 구글 로그인 (OAuth 팝업 열기) */
+function gdriveSignIn() {
+  if (!gdClientId) {
+    toast('⚠️ 먼저 Client ID를 입력하고 저장해주세요.');
+    document.getElementById('gcp-client-id').focus();
+    return;
+  }
+  if (typeof google === 'undefined') { toast('⚠️ 구글 스크립트 로딩 중입니다. 잠시 후 다시 시도해주세요.'); return; }
+
+  // 구글 로그인 창 띄우기
+  gdTokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: gdClientId,
+    scope: GDRIVE_SCOPES,
+    callback: (resp) => {
+      if (resp.error) { toast('⚠️ 로그인 실패: ' + resp.error); return; }
+      gdAccessToken = resp.access_token;
+      localStorage.setItem('ctm_gd_token', gdAccessToken);
+      gapi.client.setToken({ access_token: gdAccessToken });
+      renderGdriveStatus();
+      toast('✅ 구글 드라이브에 연결됐습니다!');
+    }
+  });
+  gdTokenClient.requestAccessToken();
+}
+
+/* 로그아웃 */
+function gdriveSignOut() {
+  if (gdAccessToken && typeof google !== 'undefined') {
+    google.accounts.oauth2.revoke(gdAccessToken, () => {});
+  }
+  gdAccessToken = '';
+  localStorage.removeItem('ctm_gd_token');
+  gapi.client.setToken(null);
+  renderGdriveStatus();
+  toast('구글 드라이브 연결이 해제됐습니다.');
+}
+
+/* 연결 상태 UI 갱신 */
+function renderGdriveStatus() {
+  const statusEl  = document.getElementById('gdrive-status');
+  const statusTxt = document.getElementById('gdrive-status-text');
+  const btn       = document.getElementById('gdrive-btn');
+  const pathInfo  = document.getElementById('gdrive-path-info');
+  if (!statusEl) return;
+
+  if (gdAccessToken) {
+    statusEl.className = 'gdrive-status connected';
+    statusTxt.textContent = '연결됨 — 자동 저장 활성화';
+    btn.className = 'gdrive-connect-btn sign-out';
+    btn.innerHTML = '연결 해제';
+    btn.onclick = gdriveSignOut;
+    pathInfo.style.display = 'block';
+  } else {
+    statusEl.className = 'gdrive-status disconnected';
+    statusTxt.textContent = '연결 안 됨';
+    btn.className = 'gdrive-connect-btn sign-in';
+    btn.innerHTML = `<svg width="15" height="15" viewBox="0 0 24 24"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="white"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="white" opacity="0.85"/></svg> Google 계정으로 로그인`;
+    btn.onclick = gdriveSignIn;
+    pathInfo.style.display = 'none';
+  }
+}
+
+/* ── Drive 폴더 경로를 ID로 변환 (없으면 자동 생성) ── */
+async function getOrCreateFolderPath(pathStr) {
+  // 'Work/Total/Record' → ['Work','Total','Record'] 순서로 폴더 생성
+  const parts = pathStr.split('/');
+  let parentId = 'root';
+
+  for (const name of parts) {
+    // 이미 있는지 검색
+    const res = await gapi.client.drive.files.list({
+      q: `name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`,
+      fields: 'files(id,name)',
+      spaces: 'drive'
+    });
+    const found = res.result.files[0];
+    if (found) {
+      parentId = found.id;
+    } else {
+      // 없으면 새 폴더 만들기
+      const created = await gapi.client.drive.files.create({
+        resource: { name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] },
+        fields: 'id'
+      });
+      parentId = created.result.id;
+    }
+  }
+  return parentId; // 최종 폴더 ID 반환
+}
+
+/* ── 파일을 Drive에 업로드 (multipart) ── */
+async function uploadToDrive(fileName, mimeType, content, folderPath) {
+  if (!gdAccessToken || !gapiReady) return false;
+  try {
+    const folderId = await getOrCreateFolderPath(folderPath);
+
+    // content가 Blob이면 그대로, 문자열이면 Blob으로 변환
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType });
+    const b64  = await new Promise(res => {
+      const r = new FileReader();
+      r.onloadend = () => res(r.result.split(',')[1]);
+      r.readAsDataURL(blob);
+    });
+
+    // multipart 업로드 (메타데이터 + 파일 내용을 한 번에 전송)
+    const boundary = 'ctm_boundary_' + Date.now();
+    const body = [
+      `--${boundary}`,
+      'Content-Type: application/json; charset=UTF-8',
+      '',
+      JSON.stringify({ name: fileName, parents: [folderId] }),
+      `--${boundary}`,
+      `Content-Type: ${mimeType}`,
+      'Content-Transfer-Encoding: base64',
+      '',
+      b64,
+      `--${boundary}--`
+    ].join('\r\n');
+
+    await gapi.client.request({
+      path: 'https://www.googleapis.com/upload/drive/v3/files',
+      method: 'POST',
+      params: { uploadType: 'multipart' },
+      headers: { 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body
+    });
+    return true;
+  } catch(e) {
+    console.error('Drive 업로드 오류:', e);
+    return false;
+  }
+}
+
+/* ── 업무 목록을 JSON + 텍스트로 Drive에 저장 ── */
+async function gdriveSaveTasks() {
+  if (!gdAccessToken) return;
+  const now      = new Date();
+  const dateStr  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`;
+  const fileName = `업무목록_${dateStr}.json`;
+
+  // 보기 좋은 JSON으로 저장
+  const content = JSON.stringify({ savedAt: new Date().toISOString(), tasks }, null, 2);
+  const ok = await uploadToDrive(fileName, 'application/json', content, FOLDER_LIST);
+  if (ok) toast(`☁️ 업무 목록이 Drive에 저장됐어요 (${FOLDER_LIST}/${fileName})`);
+  else    toast('⚠️ Drive 저장 실패. 연결 상태를 확인해주세요.');
+}
+
+/* ── 월별 정리를 Drive에 저장 ── */
+async function gdriveSaveArchive() {
+  if (!gdAccessToken) return;
+  const now      = new Date();
+  const dateStr  = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  const fileName = `월별정리_${dateStr}.json`;
+
+  const content = JSON.stringify({ savedAt: new Date().toISOString(), archive }, null, 2);
+  const ok = await uploadToDrive(fileName, 'application/json', content, FOLDER_LIST);
+  if (ok) toast(`☁️ 월별 정리가 Drive에 저장됐어요 (${FOLDER_LIST}/${fileName})`);
+  else    toast('⚠️ Drive 저장 실패.');
+}
+
+/* ── 녹음 파일(Blob)을 Drive Record 폴더에 저장 ── */
+async function gdriveSaveAudioFile(blob, fileName) {
+  if (!gdAccessToken) return false;
+  const mimeType = blob.type || 'audio/mpeg';
+  const ok = await uploadToDrive(fileName, mimeType, blob, FOLDER_RECORD);
+  return ok;
+}
+
+/* 수동 저장 버튼용 */
+async function gdriveSaveTasksManual() {
+  if (!gdAccessToken) { toast('⚠️ 설정 탭에서 구글 드라이브를 먼저 연결해주세요.'); return; }
+  toast('☁️ Drive에 저장 중...'); await gdriveSaveTasks();
+}
+async function gdriveSaveArchiveManual() {
+  if (!gdAccessToken) { toast('⚠️ 설정 탭에서 구글 드라이브를 먼저 연결해주세요.'); return; }
+  toast('☁️ Drive에 저장 중...'); await gdriveSaveArchive();
+}
+
+/* ══════════════════════════════════════════════
+   🔄 Drive 복구 기능
+   ── 쉽게 말하면 ──
+   Drive의 Work/Total/List/ 폴더에서
+   저장된 JSON 파일 목록을 가져와 보여주고,
+   사용자가 선택하면 그 내용으로 덮어씌워요.
+══════════════════════════════════════════════ */
+let restoreType = '';       // 'tasks' 또는 'archive'
+let restoreFileId = '';     // 선택한 파일의 Drive ID
+let restoreFileName = '';   // 선택한 파일명
+
+/* 복구 패널 열기 — Drive에서 파일 목록 가져오기 */
+async function openRestorePanel(type) {
+  if (!gdAccessToken) {
+    toast('⚠️ 설정 탭에서 구글 드라이브를 먼저 연결해주세요.');
+    return;
+  }
+  restoreType = type;
+  const panel = document.getElementById('restore-panel');
+  const title = document.getElementById('restore-panel-title');
+  const listEl = document.getElementById('restore-file-list');
+
+  title.textContent = type === 'tasks' ? '📋 업무 목록 백업 파일 선택' : '📁 월별 정리 백업 파일 선택';
+  listEl.innerHTML = `<div style="display:flex;align-items:center;gap:8px;padding:10px 0;font-size:13px;color:var(--text2);"><div class="spinner"></div> Drive에서 파일 목록을 가져오는 중...</div>`;
+  panel.style.display = 'block';
+  panel.scrollIntoView({ behavior: 'smooth' });
+
+  try {
+    // Drive에서 List 폴더 안의 JSON 파일만 검색
+    const prefix = type === 'tasks' ? '업무목록_' : '월별정리_';
+    const folderId = await getOrCreateFolderPath(FOLDER_LIST);
+    const res = await gapi.client.drive.files.list({
+      q: `'${folderId}' in parents and name contains '${prefix}' and mimeType='application/json' and trashed=false`,
+      fields: 'files(id,name,modifiedTime,size)',
+      orderBy: 'modifiedTime desc',   // 최신 파일부터 정렬
+      spaces: 'drive'
+    });
+
+    const files = res.result.files || [];
+    if (!files.length) {
+      listEl.innerHTML = `<div style="padding:14px 0;text-align:center;font-size:13px;color:var(--text3);">Drive에 저장된 백업 파일이 없어요.<br>먼저 저장 버튼으로 백업을 만들어주세요.</div>`;
+      return;
+    }
+
+    // 파일 목록 카드 렌더링
+    listEl.innerHTML = files.map(f => {
+      const date = new Date(f.modifiedTime);
+      const dateStr = `${date.getFullYear()}.${date.getMonth()+1}.${date.getDate()} ${date.getHours()}:${String(date.getMinutes()).padStart(2,'0')}`;
+      const sizeKB = f.size ? Math.round(f.size / 1024) + ' KB' : '';
+      return `
+        <div class="restore-file-item" onclick="selectRestoreFile('${f.id}', '${f.name.replace(/'/g,'')}')">
+          <div class="restore-file-icon">${type === 'tasks' ? '📋' : '📁'}</div>
+          <div class="restore-file-info">
+            <div class="restore-file-name">${f.name}</div>
+            <div class="restore-file-date">저장일: ${dateStr} ${sizeKB ? '· ' + sizeKB : ''}</div>
+          </div>
+          <button class="restore-file-btn" onclick="event.stopPropagation();selectRestoreFile('${f.id}','${f.name.replace(/'/g,'')}')">선택</button>
+        </div>`;
+    }).join('');
+
+  } catch(e) {
+    listEl.innerHTML = `<div style="padding:10px 0;font-size:13px;color:var(--red);">⚠️ 파일 목록을 가져오지 못했습니다. Drive 연결을 확인해주세요.</div>`;
+    console.error(e);
+  }
+}
+
+function closeRestorePanel() {
+  document.getElementById('restore-panel').style.display = 'none';
+  restoreFileId = ''; restoreFileName = '';
+}
+
+/* 파일 선택 → 덮어쓰기 확인창 표시 */
+function selectRestoreFile(fileId, fileName) {
+  restoreFileId   = fileId;
+  restoreFileName = fileName;
+
+  const listEl = document.getElementById('restore-file-list');
+  // 기존 확인창 제거 후 새로 추가
+  const prev = document.getElementById('restore-confirm-box');
+  if (prev) prev.remove();
+
+  const confirmHTML = `
+    <div class="restore-confirm" id="restore-confirm-box">
+      <p>
+        <b>"${fileName}"</b> 파일로 복구할까요?<br>
+        ⚠️ 현재 ${restoreType === 'tasks' ? '업무 목록' : '월별 정리'}이 이 파일 내용으로 <b>덮어씌워집니다.</b><br>
+        이 작업은 되돌릴 수 없어요.
+      </p>
+      <div class="restore-confirm-btns">
+        <button class="restore-cancel" onclick="document.getElementById('restore-confirm-box').remove()">취소</button>
+        <button class="restore-ok" onclick="executeRestore()">복구 실행</button>
+      </div>
+    </div>`;
+  listEl.insertAdjacentHTML('beforeend', confirmHTML);
+  document.getElementById('restore-confirm-box').scrollIntoView({ behavior: 'smooth' });
+}
+
+/* 실제 복구 실행 — Drive에서 파일 내용 다운로드 후 앱에 적용 */
+async function executeRestore() {
+  if (!restoreFileId) return;
+  const confirmBox = document.getElementById('restore-confirm-box');
+  if (confirmBox) confirmBox.innerHTML = `<div style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);padding:4px 0;"><div class="spinner"></div> 복구 중...</div>`;
+
+  try {
+    // Drive에서 파일 내용(JSON 텍스트) 다운로드
+    const res = await gapi.client.drive.files.get({
+      fileId: restoreFileId,
+      alt: 'media'    // 파일 내용을 직접 받는 옵션
+    });
+
+    // JSON 파싱
+    const raw = typeof res.body === 'string' ? JSON.parse(res.body) : res.result;
+
+    if (restoreType === 'tasks') {
+      // ── 업무 목록 복구 ──
+      if (!raw.tasks || !Array.isArray(raw.tasks)) throw new Error('올바른 업무 목록 파일이 아닙니다.');
+      tasks = raw.tasks;
+      idCounter = tasks.length ? Math.max(...tasks.map(t => t.id)) + 1 : 1;
+      saveTasks();
+      renderTasks();
+      toast(`✅ 업무 목록 복구 완료! (${tasks.length}개 업무)`);
+
+    } else {
+      // ── 월별 정리 복구 ──
+      if (!raw.archive || typeof raw.archive !== 'object') throw new Error('올바른 월별 정리 파일이 아닙니다.');
+      archive = raw.archive;
+      saveArchive();
+      renderArchive();
+      toast(`✅ 월별 정리 복구 완료! (${Object.keys(archive).length}개 월)`);
+    }
+
+    closeRestorePanel();
+
+  } catch(e) {
+    const confirmBox = document.getElementById('restore-confirm-box');
+    if (confirmBox) confirmBox.innerHTML = `<div style="font-size:13px;color:var(--red);padding:4px 0;">⚠️ 복구 실패: ${e.message || '파일을 읽을 수 없습니다.'}</div>`;
+    console.error(e);
+  }
+}
+
+/* 초기화 */
+initGapi();
+
+/* ── 토스트 ── */
+let toastTimer=null;
+function toast(msg){
+  const el=document.getElementById('toast');
+  el.textContent=msg; el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>el.classList.remove('show'),2800);
+}
+
+/* ── 초기 실행 ── */
+checkMonthlyArchive(); // 매월 1일 자동 아카이브 체크
+renderTasks();
+renderContacts();
+renderArchive();
+</script>
+</body>
+</html>
