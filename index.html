@@ -222,6 +222,15 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .mdot{width:7px;height:7px;border-radius:50%;background:var(--text3);}
 .mdot.on{background:var(--teal-mid);}
 
+/* ── 담당자 색상 선택 ── */
+.color-picker-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
+.color-swatch{width:32px;height:32px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all 0.15s;}
+.color-swatch.selected{border-color:var(--text)!important;transform:scale(1.15);}
+.color-swatch:hover{transform:scale(1.1);}
+/* 담당자 카드 삭제 버튼 */
+.contact-del-btn{width:30px;height:30px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0;}
+.contact-del-btn:hover{background:var(--red-light);color:var(--red);}
+
 /* ── 내보내기 버튼 ── */
 .export-row{display:flex;gap:7px;margin-bottom:12px;}
 .export-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 6px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid;transition:all 0.15s;}
@@ -497,20 +506,10 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 
       <div class="divider"><div class="divider-line"></div><div class="divider-text">샘플 통화로 기능 체험</div><div class="divider-line"></div></div>
       <div class="demo-calls">
-        <button class="demo-call" onclick="analyzeCall(0)">
-          <div class="call-avatar" style="background:#E1F5EE;color:#0F6E56">김</div>
-          <div class="call-info"><div class="call-name">김민준 (개발팀장)<span class="demo-badge">데모</span></div><div class="call-meta">오늘 14:32 · 방금 종료</div></div>
-          <div class="call-duration">8분 22초</div>
-        </button>
         <button class="demo-call" onclick="analyzeCall(1)">
           <div class="call-avatar" style="background:#EEEDFE;color:#534AB7">이</div>
           <div class="call-info"><div class="call-name">이서연 (마케팅팀)<span class="demo-badge">데모</span></div><div class="call-meta">오늘 11:15 · 녹음 대기</div></div>
           <div class="call-duration">5분 41초</div>
-        </button>
-        <button class="demo-call" onclick="analyzeCall(2)">
-          <div class="call-avatar" style="background:#FAEEDA;color:#854F0B">박</div>
-          <div class="call-info"><div class="call-name">박지훈 (영업팀)<span class="demo-badge">데모</span></div><div class="call-meta">어제 17:08 · 녹음 대기</div></div>
-          <div class="call-duration">12분 05초</div>
         </button>
       </div>
       <div id="analysis-result"></div>
@@ -617,7 +616,38 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 
     <!-- ═══════ 담당자 탭 ═══════ -->
     <div class="page" id="page-contacts">
-      <div class="section-title">모니터링 담당자</div>
+
+      <!-- 담당자 추가 폼 -->
+      <div class="add-task-form" style="margin-bottom:14px;">
+        <h3>👤 담당자 추가</h3>
+        <div class="form-row" style="margin-top:10px;">
+          <div class="form-field">
+            <label class="form-label">이름 *</label>
+            <input class="form-input" id="c-name" placeholder="예: 홍길동" />
+          </div>
+          <div class="form-field">
+            <label class="form-label">직책 / 부서</label>
+            <input class="form-input" id="c-role" placeholder="예: 영업팀장" />
+          </div>
+        </div>
+        <!-- 색상 선택 -->
+        <div class="form-field" style="margin-top:2px;">
+          <label class="form-label">프로필 색상</label>
+          <div class="color-picker-row" id="color-picker-row">
+            <div class="color-swatch selected" data-bg="#E1F5EE" data-text="#0F6E56" onclick="selectColor(this)" style="background:#E1F5EE;border-color:#0F6E56;"></div>
+            <div class="color-swatch" data-bg="#EEEDFE" data-text="#534AB7" onclick="selectColor(this)" style="background:#EEEDFE;"></div>
+            <div class="color-swatch" data-bg="#FAEEDA" data-text="#854F0B" onclick="selectColor(this)" style="background:#FAEEDA;"></div>
+            <div class="color-swatch" data-bg="#E6F1FB" data-text="#185FA5" onclick="selectColor(this)" style="background:#E6F1FB;"></div>
+            <div class="color-swatch" data-bg="#FAECE7" data-text="#993C1D" onclick="selectColor(this)" style="background:#FAECE7;"></div>
+            <div class="color-swatch" data-bg="#EAF3DE" data-text="#3B6D11" onclick="selectColor(this)" style="background:#EAF3DE;"></div>
+            <div class="color-swatch" data-bg="#FCEBEB" data-text="#A32D2D" onclick="selectColor(this)" style="background:#FCEBEB;"></div>
+            <div class="color-swatch" data-bg="#F9F8F5" data-text="#444441" onclick="selectColor(this)" style="background:#F9F8F5;border-color:#888;"></div>
+          </div>
+        </div>
+        <button class="form-submit" onclick="addContact()" style="margin-top:10px;">담당자 추가하기</button>
+      </div>
+
+      <div class="section-title">담당자 목록 (<span id="contact-count">0</span>명)</div>
       <div id="contact-list"></div>
     </div>
 
@@ -758,12 +788,76 @@ const SAMPLE_CALLS = [
   }
 ];
 
-const contacts = [
-  {name:"김민준",role:"개발팀장",color:"#E1F5EE",textColor:"#0F6E56",monitor:true, calls:3,tasks:5},
-  {name:"이서연",role:"마케팅팀", color:"#EEEDFE",textColor:"#534AB7",monitor:true, calls:2,tasks:3},
-  {name:"박지훈",role:"영업팀",  color:"#FAEEDA",textColor:"#854F0B",monitor:true, calls:4,tasks:7},
-  {name:"최수진",role:"기획팀",  color:"#E6F1FB",textColor:"#185FA5",monitor:false,calls:1,tasks:2},
+const LS_CONTACTS = 'ctm_contacts';
+
+/* 기본 담당자 (처음 실행 시에만 사용, 이후엔 localStorage) */
+const DEFAULT_CONTACTS = [
+  {name:"이서연", role:"마케팅팀",  color:"#EEEDFE", textColor:"#534AB7", monitor:true,  calls:0, tasks:0},
 ];
+
+/* contacts를 localStorage에서 로드, 없으면 기본값 */
+let contacts = JSON.parse(localStorage.getItem(LS_CONTACTS) || 'null')
+               ?? DEFAULT_CONTACTS;
+
+function saveContacts() {
+  localStorage.setItem(LS_CONTACTS, JSON.stringify(contacts));
+}
+
+/* 현재 선택된 색상 */
+let selectedColor = { bg:'#E1F5EE', text:'#0F6E56' };
+
+function selectColor(el) {
+  document.querySelectorAll('.color-swatch').forEach(s => s.classList.remove('selected'));
+  el.classList.add('selected');
+  selectedColor = { bg: el.dataset.bg, text: el.dataset.text };
+}
+
+/* 담당자 추가 */
+function addContact() {
+  const name = document.getElementById('c-name').value.trim();
+  if (!name) { toast('이름을 입력해주세요.'); document.getElementById('c-name').focus(); return; }
+  const role = document.getElementById('c-role').value.trim() || '미지정';
+
+  // 중복 체크
+  if (contacts.find(c => c.name === name)) {
+    toast(`⚠️ "${name}"은 이미 등록된 담당자예요.`); return;
+  }
+
+  contacts.push({
+    name, role,
+    color:     selectedColor.bg,
+    textColor: selectedColor.text,
+    monitor:   true,
+    calls:     0,
+    tasks:     0
+  });
+
+  saveContacts();
+
+  // 폼 초기화
+  document.getElementById('c-name').value = '';
+  document.getElementById('c-role').value = '';
+
+  renderContacts();
+  toast(`✅ "${name}" 담당자가 추가됐어요!`);
+}
+
+/* 담당자 삭제 */
+function deleteContact(idx) {
+  const name = contacts[idx].name;
+  if (!confirm(`"${name}" 담당자를 삭제할까요?`)) return;
+  contacts.splice(idx, 1);
+  saveContacts();
+  renderContacts();
+  toast(`🗑 "${name}" 담당자가 삭제됐습니다.`);
+}
+
+/* 감시 토글 */
+function toggleMonitor(i) {
+  contacts[i].monitor = !contacts[i].monitor;
+  saveContacts();
+  renderContacts();
+}
 
 /* ── 업무 & 아카이브 로드/저장 ── */
 let tasks    = JSON.parse(localStorage.getItem(LS_TASKS)   || '[]');
@@ -1692,26 +1786,45 @@ function toggleArchiveMonth(header){
 }
 
 /* ══════════════════════════════════════════════
-   담당자
+   담당자 렌더링
 ══════════════════════════════════════════════ */
-function renderContacts(){
-  document.getElementById('contact-list').innerHTML=contacts.map((c,i)=>`
-    <div class="contact-card">
-      <div class="c-avatar" style="background:${c.color};color:${c.textColor}">${c.name[0]}</div>
-      <div class="contact-info">
-        <div class="contact-name">${c.name}</div>
-        <div class="contact-role">${c.role}</div>
-        <div class="contact-stats">
-          <span class="c-stat">통화 <strong>${c.calls}</strong>건</span>
-          <span class="c-stat">업무 <strong>${c.tasks}</strong>건</span>
+function renderContacts() {
+  const el = document.getElementById('contact-list');
+  const countEl = document.getElementById('contact-count');
+  if (countEl) countEl.textContent = contacts.length;
+
+  if (!contacts.length) {
+    el.innerHTML = '<div class="empty">담당자가 없어요.<br>위 폼에서 추가해 보세요!</div>';
+    return;
+  }
+
+  el.innerHTML = contacts.map((c, i) => {
+    // 이 담당자의 업무 수 실시간 계산
+    const taskCount = tasks.filter(t => t.assignee === c.name).length;
+    return `
+      <div class="contact-card">
+        <div class="c-avatar" style="background:${c.color};color:${c.textColor}">${c.name[0]}</div>
+        <div class="contact-info">
+          <div class="contact-name">${c.name}</div>
+          <div class="contact-role">${c.role}</div>
+          <div class="contact-stats">
+            <span class="c-stat">업무 <strong>${taskCount}</strong>건</span>
+          </div>
         </div>
-      </div>
-      <button class="monitor-toggle ${c.monitor?'on':''}" onclick="toggleMonitor(${i})">
-        <div class="mdot ${c.monitor?'on':''}"></div>${c.monitor?'감시중':'감시OFF'}
-      </button>
-    </div>`).join('');
+        <button class="monitor-toggle ${c.monitor?'on':''}" onclick="toggleMonitor(${i})">
+          <div class="mdot ${c.monitor?'on':''}"></div>${c.monitor?'감시중':'감시OFF'}
+        </button>
+        <button class="contact-del-btn" onclick="deleteContact(${i})" title="담당자 삭제">
+          <svg viewBox="0 0 14 14" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round">
+            <polyline points="2,4 12,4"/>
+            <path d="M5 4V2h4v2"/>
+            <rect x="3" y="4" width="8" height="8" rx="1"/>
+            <line x1="5" y1="7" x2="5" y2="10"/><line x1="9" y1="7" x2="9" y2="10"/>
+          </svg>
+        </button>
+      </div>`;
+  }).join('');
 }
-function toggleMonitor(i){contacts[i].monitor=!contacts[i].monitor;renderContacts();}
 
 /* ── 탭 전환 ── */
 function showPage(id,btn){
