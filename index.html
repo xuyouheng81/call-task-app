@@ -121,7 +121,7 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .add-btn:hover{opacity:0.88;}
 .add-btn:disabled{opacity:0.45;cursor:not-allowed;}
 
-/* ── 업무 직접 추가 폼 ── */
+/* ── 업무 목록 ── */
 .add-task-form{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
 .add-task-form h3{font-size:14px;font-weight:500;margin-bottom:12px;}
 .form-field{margin-bottom:10px;}
@@ -135,7 +135,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .form-submit{width:100%;padding:11px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;margin-top:4px;}
 .form-submit:hover{opacity:0.88;}
 
-/* ── 업무 목록 ── */
 .filter-row{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;}
 .filter-btn{font-size:12px;padding:5px 12px;border-radius:20px;border:1px solid var(--border);background:var(--surface);color:var(--text2);cursor:pointer;font-family:inherit;transition:all 0.15s;}
 .filter-btn.active{background:var(--text);color:white;border-color:var(--text);}
@@ -165,8 +164,24 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .prog-btn.sel-ing{background:var(--amber-light);color:var(--amber);border-color:transparent;font-weight:500;}
 .prog-btn.sel-done{background:var(--teal-light);color:var(--teal);border-color:transparent;font-weight:500;}
 .empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;line-height:1.8;}
-.task-delete{width:28px;height:28px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0;margin-top:0;}
-.task-delete:hover{background:var(--red-light);color:var(--red);}
+
+/* 수정/삭제 버튼 영역 */
+.task-actions { display:flex; gap:6px; flex-shrink:0; align-items:flex-start; }
+.task-action-btn{width:26px;height:26px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);}
+.task-action-btn:hover{background:var(--surface2);color:var(--text);}
+.task-action-btn.del:hover{background:var(--red-light);color:var(--red);}
+
+/* 업무 수정 팝업(모달) */
+.modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:9999; }
+.modal-overlay.show { display:flex; }
+.modal-content { background:var(--surface); padding:20px; border-radius:var(--radius); width:92%; max-width:380px; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
+.modal-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; }
+.modal-header h3 { font-size:15px; font-weight:600; }
+.modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:var(--text3); }
+.modal-btns { display:flex; gap:8px; margin-top:16px; }
+.modal-btn { flex:1; padding:10px; border-radius:var(--radius-sm); font-size:14px; font-weight:500; cursor:pointer; font-family:inherit; border:none; }
+.modal-btn.cancel { background:var(--surface2); color:var(--text2); border:1px solid var(--border); }
+.modal-btn.save { background:var(--teal); color:white; }
 
 /* ── 메모 ── */
 .task-memo-toggle{display:flex;align-items:center;gap:5px;margin-top:10px;padding:0;background:none;border:none;cursor:pointer;font-size:12px;color:var(--text3);font-family:inherit;width:100%;text-align:left;}
@@ -204,7 +219,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .archive-check svg{width:8px;height:8px;}
 .archive-task-title{font-size:13px;color:var(--text2);text-decoration:line-through;flex:1;}
 .archive-task-meta{font-size:11px;color:var(--text3);}
-.archive-empty{padding:20px;text-align:center;color:var(--text3);font-size:13px;}
 .archive-notice{background:var(--teal-light);border:1px solid #9FE1CB;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--teal);line-height:1.6;}
 
 /* ── 담당자 ── */
@@ -223,7 +237,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .color-picker-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
 .color-swatch{width:32px;height:32px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all 0.15s;}
 .color-swatch.selected{border-color:var(--text)!important;transform:scale(1.15);}
-.color-swatch:hover{transform:scale(1.1);}
 .contact-del-btn{width:30px;height:30px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0;}
 .contact-del-btn:hover{background:var(--red-light);color:var(--red);}
 
@@ -232,30 +245,10 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .export-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 6px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid;transition:all 0.15s;}
 .export-btn svg{width:13px;height:13px;flex-shrink:0;}
 .export-btn.excel{background:#E8F5E9;color:#1B5E20;border-color:#A5D6A7;}
-.export-btn.excel:hover{background:#C8E6C9;}
 .export-btn.pdf{background:#FFEBEE;color:#B71C1C;border-color:#EF9A9A;}
-.export-btn.pdf:hover{background:#FFCDD2;}
 .export-btn.csv{background:#E3F2FD;color:#0D47A1;border-color:#90CAF9;}
-.export-btn.csv:hover{background:#BBDEFB;}
 
-/* ── 다중 파일 대기열 ── */
-.queue-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;}
-.queue-item.done{opacity:0.55;}
-.queue-item.analyzing{border-color:var(--purple);background:var(--purple-light);}
-.queue-item.error{border-color:var(--red-mid);background:var(--red-light);}
-.queue-num{width:22px;height:22px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text3);flex-shrink:0;}
-.queue-item.analyzing .queue-num{background:var(--purple);color:white;}
-.queue-item.done .queue-num{background:var(--teal-mid);color:white;}
-.queue-item.error .queue-num{background:var(--red-mid);color:white;}
-.queue-file-name{flex:1;font-size:13px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.queue-status{font-size:11px;color:var(--text3);flex-shrink:0;}
-.queue-item.analyzing .queue-status{color:var(--purple);}
-.queue-item.done .queue-status{color:var(--teal);}
-.queue-item.error .queue-status{color:var(--red);}
-.queue-remove{width:20px;height:20px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0;padding:0;}
-.queue-remove:hover{background:var(--red-light);color:var(--red);}
-
-/* ── 파일 업로드 패널 ── */
+/* ── 파일 업로드 패널 / 다중 파일 대기열 ── */
 .upload-panel{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
 .upload-panel h3{font-size:15px;font-weight:500;margin-bottom:4px;}
 .upload-panel p{font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.5;}
@@ -276,7 +269,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .upload-file-name{font-size:13px;font-weight:500;color:var(--purple);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .upload-file-size{font-size:11px;color:var(--text3);flex-shrink:0;}
 .upload-remove-btn{width:24px;height:24px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--purple);flex-shrink:0;}
-.upload-remove-btn:hover{background:rgba(83,74,183,0.15);}
 .upload-playback-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
 .upload-play-btn{width:36px;height:36px;border-radius:50%;background:var(--purple-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .upload-play-btn svg{width:14px;height:14px;}
@@ -285,26 +277,17 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .upload-time{font-size:12px;color:var(--text3);min-width:36px;text-align:right;}
 .upload-name-row{display:flex;gap:8px;margin-bottom:10px;}
 .upload-analyze-btn{width:100%;padding:11px;background:var(--purple);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;}
-.upload-analyze-btn:hover{opacity:0.88;}
-.upload-analyze-btn:disabled{opacity:0.45;cursor:not-allowed;}
+.queue-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;}
+.queue-item.done{opacity:0.55;}
+.queue-item.analyzing{border-color:var(--purple);background:var(--purple-light);}
+.queue-item.error{border-color:var(--red-mid);background:var(--red-light);}
+.queue-num{width:22px;height:22px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text3);flex-shrink:0;}
+.queue-item.analyzing .queue-num{background:var(--purple);color:white;}
+.queue-file-name{flex:1;font-size:13px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.queue-status{font-size:11px;color:var(--text3);flex-shrink:0;}
+.queue-remove{width:20px;height:20px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0;padding:0;}
 
-/* ── 복구 파일 목록 ── */
-.restore-file-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:7px;cursor:pointer;transition:all 0.15s;}
-.restore-file-item:hover{border-color:var(--coral);background:var(--coral-light);}
-.restore-file-icon{width:32px;height:32px;background:var(--surface2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;}
-.restore-file-info{flex:1;min-width:0;}
-.restore-file-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.restore-file-date{font-size:11px;color:var(--text3);margin-top:2px;}
-.restore-file-btn{font-size:12px;padding:5px 10px;background:var(--coral-light);color:var(--coral);border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:500;flex-shrink:0;}
-.restore-file-btn:hover{opacity:0.85;}
-.restore-confirm{background:var(--red-light);border:1px solid #F09595;border-radius:var(--radius-sm);padding:12px 14px;margin-top:8px;}
-.restore-confirm p{font-size:13px;color:var(--red);margin-bottom:10px;line-height:1.5;}
-.restore-confirm-btns{display:flex;gap:8px;}
-.restore-confirm-btns button{flex:1;padding:9px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;border:none;}
-.restore-ok{background:var(--red-mid);color:white;}
-.restore-cancel{background:var(--surface2);color:var(--text2);}
-
-/* ── 구글 드라이브 설정 배너 ── */
+/* ── 구글 드라이브 설정 배너 / 복구 ── */
 .gdrive-banner{background:#fff;border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px;margin-bottom:14px;}
 .gdrive-banner-title{font-size:13px;font-weight:500;color:var(--text);margin-bottom:6px;display:flex;align-items:center;gap:7px;}
 .gdrive-banner-title svg{width:16px;height:16px;flex-shrink:0;}
@@ -312,14 +295,24 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .gdrive-status{display:flex;align-items:center;gap:8px;font-size:12px;padding:8px 10px;border-radius:var(--radius-sm);margin-bottom:10px;}
 .gdrive-status.disconnected{background:var(--surface2);color:var(--text3);}
 .gdrive-status.connected{background:var(--teal-light);color:var(--teal);}
-.gdrive-status.error{background:var(--red-light);color:var(--red);}
 .gdrive-connect-btn{width:100%;padding:9px;border:none;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;display:flex;align-items:center;justify-content:center;gap:8px;}
 .gdrive-connect-btn.sign-in{background:#4285F4;color:white;}
-.gdrive-connect-btn.sign-in:hover{opacity:0.9;}
 .gdrive-connect-btn.sign-out{background:var(--surface2);color:var(--text2);border:1px solid var(--border);}
-.gdrive-connect-btn.sign-out:hover{background:var(--red-light);color:var(--red);border-color:var(--red-light);}
 .gdrive-path-info{font-size:11px;color:var(--text3);margin-top:8px;line-height:1.6;}
 .gdrive-path-info span{background:var(--surface2);padding:1px 6px;border-radius:4px;font-family:monospace;font-size:11px;}
+.restore-file-item{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:7px;cursor:pointer;}
+.restore-file-item:hover{border-color:var(--coral);background:var(--coral-light);}
+.restore-file-icon{width:32px;height:32px;background:var(--surface2);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:15px;}
+.restore-file-info{flex:1;min-width:0;}
+.restore-file-name{font-size:13px;font-weight:500;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.restore-file-date{font-size:11px;color:var(--text3);margin-top:2px;}
+.restore-file-btn{font-size:12px;padding:5px 10px;background:var(--coral-light);color:var(--coral);border:none;border-radius:6px;cursor:pointer;font-family:inherit;font-weight:500;flex-shrink:0;}
+.restore-confirm{background:var(--red-light);border:1px solid #F09595;border-radius:var(--radius-sm);padding:12px 14px;margin-top:8px;}
+.restore-confirm p{font-size:13px;color:var(--red);margin-bottom:10px;line-height:1.5;}
+.restore-confirm-btns{display:flex;gap:8px;}
+.restore-confirm-btns button{flex:1;padding:9px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;font-family:inherit;border:none;}
+.restore-ok{background:var(--red-mid);color:white;}
+.restore-cancel{background:var(--surface2);color:var(--text2);}
 
 /* ── 토스트 알림 ── */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a18;color:white;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap;pointer-events:none;}
@@ -349,7 +342,7 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 
       <div class="api-banner" id="api-banner">
         <div class="api-banner-title">🔑 Google Gemini API 키 (필수)</div>
-        <p>실제 오디오 분석을 수행하려면 <b>aistudio.google.com</b>에서 무료 API 키를 발급받아 입력하세요.<br>(가입 후 Get API Key 버튼 클릭)</p>
+        <p>실제 오디오 분석을 수행하려면 <b>aistudio.google.com</b>에서 무료 API 키를 발급받아 입력하세요.</p>
         <div class="api-row">
           <input class="api-input" id="api-key-input" type="password" placeholder="AIzaSy..." />
           <button class="api-save-btn" onclick="saveApiKey()">저장</button>
@@ -380,12 +373,8 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
         <div class="rec-result" id="rec-result">
           <div class="transcript-label" style="margin-bottom:10px">녹음 완료</div>
           <div class="playback-row">
-            <button class="play-btn" onclick="togglePlay()">
-              <svg id="play-icon" viewBox="0 0 14 14" fill="#0F6E56"><polygon points="3,2 12,7 3,12"/></svg>
-            </button>
-            <div class="playback-bar-wrap" onclick="seekAudio(event)">
-              <div class="playback-bar" id="playback-bar"></div>
-            </div>
+            <button class="play-btn" onclick="togglePlay()"><svg id="play-icon" viewBox="0 0 14 14" fill="#0F6E56"><polygon points="3,2 12,7 3,12"/></svg></button>
+            <div class="playback-bar-wrap" onclick="seekAudio(event)"><div class="playback-bar" id="playback-bar"></div></div>
             <span class="playback-time" id="playback-time">0:00</span>
           </div>
           <div class="name-row">
@@ -400,18 +389,11 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
       <div class="upload-panel">
         <h3>📂 녹음 파일 불러오기</h3>
         <p>m4a, aac, mp3 등 다양한 오디오 파일을 지원합니다.<br>여러 파일을 동시에 선택하면 순차적으로 분석합니다.</p>
-
-        <div class="upload-drop-zone" id="upload-drop-zone"
-          ondragover="handleDragOver(event)"
-          ondragleave="handleDragLeave(event)"
-          ondrop="handleDrop(event)">
-          <input type="file" id="upload-file-input" accept="audio/*,video/webm"
-            multiple onchange="handleFileSelect(event)" />
+        <div class="upload-drop-zone" id="upload-drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
+          <input type="file" id="upload-file-input" accept="audio/*,video/webm" multiple onchange="handleFileSelect(event)" />
           <div class="upload-drop-icon">
             <svg viewBox="0 0 24 24" fill="none" stroke="#534AB7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
-              <polyline points="17 8 12 3 7 8"/>
-              <line x1="12" y1="3" x2="12" y2="15"/>
+              <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
             </svg>
           </div>
           <div class="upload-drop-text">파일을 여기에 끌어다 놓거나</div>
@@ -426,7 +408,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
           <div class="transcript-label" style="margin-bottom:8px;">대기 파일 <span id="queue-count">0</span>개</div>
           <div id="queue-file-list" style="margin-bottom:10px;"></div>
           <button class="upload-analyze-btn" id="multi-analyze-btn" onclick="analyzeAllFiles()" style="background:var(--purple);">🚀 전체 파일 순서대로 분석하기</button>
-
           <div id="multi-progress" style="display:none; margin-top:12px;">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
               <span style="font-size:13px;font-weight:500;" id="multi-progress-text">분석 중...</span>
@@ -440,30 +421,18 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 
         <div class="upload-preview" id="upload-preview">
           <div class="upload-file-info">
-            <div class="upload-file-icon">
-              <svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="1" width="12" height="14" rx="2"/><path d="M6 7l2-2 2 2M8 5v6"/></svg>
-            </div>
+            <div class="upload-file-icon"><svg viewBox="0 0 16 16" fill="none" stroke="white" stroke-width="1.5" stroke-linecap="round"><rect x="2" y="1" width="12" height="14" rx="2"/><path d="M6 7l2-2 2 2M8 5v6"/></svg></div>
             <div class="upload-file-name" id="upload-file-name">파일명.mp3</div>
             <div class="upload-file-size" id="upload-file-size">0 KB</div>
-            <button class="upload-remove-btn" onclick="removeUploadedFile()">
-              <svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg>
-            </button>
+            <button class="upload-remove-btn" onclick="removeUploadedFile()"><svg viewBox="0 0 10 10" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button>
           </div>
           <div class="upload-playback-row">
-            <button class="upload-play-btn" onclick="toggleUploadPlay()">
-              <svg id="upload-play-icon" viewBox="0 0 14 14" fill="#534AB7"><polygon points="3,2 12,7 3,12"/></svg>
-            </button>
-            <div class="upload-bar-wrap" onclick="seekUploadAudio(event)">
-              <div class="upload-bar" id="upload-bar"></div>
-            </div>
+            <button class="upload-play-btn" onclick="toggleUploadPlay()"><svg id="upload-play-icon" viewBox="0 0 14 14" fill="#534AB7"><polygon points="3,2 12,7 3,12"/></svg></button>
+            <div class="upload-bar-wrap" onclick="seekUploadAudio(event)"><div class="upload-bar" id="upload-bar"></div></div>
             <span class="upload-time" id="upload-time">0:00</span>
           </div>
-          <div class="upload-name-row">
-            <input class="name-input" id="upload-sender-name" placeholder="발신자 이름 (예: 박상민 차장)" />
-          </div>
-          <button class="upload-analyze-btn" id="upload-analyze-btn" onclick="analyzeUploadedFile()">
-            AI로 업무지시 분석하기
-          </button>
+          <div class="upload-name-row"><input class="name-input" id="upload-sender-name" placeholder="발신자 이름 (예: 박상민 차장)" /></div>
+          <button class="upload-analyze-btn" id="upload-analyze-btn" onclick="analyzeUploadedFile()">AI로 업무지시 분석하기</button>
         </div>
       </div>
 
@@ -483,7 +452,7 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
         <h3>✏️ 업무 직접 추가</h3>
         <div class="form-field">
           <label class="form-label">업무 내용 *</label>
-          <input class="form-input" id="f-title" placeholder="예: 스티커 053-258-88 교체 작업" />
+          <input class="form-input" id="f-title" placeholder="예: 스티커 교체 작업" />
         </div>
         <div class="form-row">
           <div class="form-field">
@@ -521,30 +490,9 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
       </div>
 
       <div class="export-row">
-        <button class="export-btn excel" onclick="exportExcel()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="1" y="1" width="14" height="14" rx="2"/>
-            <line x1="5" y1="1" x2="5" y2="15"/><line x1="1" y1="5" x2="15" y2="5"/>
-            <line x1="1" y1="9" x2="15" y2="9"/><line x1="1" y1="13" x2="15" y2="13"/>
-          </svg>
-          엑셀 (.xlsx)
-        </button>
-        <button class="export-btn pdf" onclick="exportPDF()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 1H3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V6L9 1z"/>
-            <polyline points="9,1 9,6 14,6"/>
-            <line x1="4" y1="9" x2="12" y2="9"/><line x1="4" y1="12" x2="10" y2="12"/>
-          </svg>
-          PDF
-        </button>
-        <button class="export-btn csv" onclick="exportCSV()">
-          <svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-            <path d="M9 1H3a1 1 0 00-1 1v12a1 1 0 001 1h10a1 1 0 001-1V6L9 1z"/>
-            <polyline points="9,1 9,6 14,6"/>
-            <line x1="4" y1="9" x2="12" y2="9"/><line x1="4" y1="12" x2="8" y2="12"/>
-          </svg>
-          CSV
-        </button>
+        <button class="export-btn excel" onclick="exportExcel()">엑셀 (.xlsx)</button>
+        <button class="export-btn pdf" onclick="exportPDF()">PDF</button>
+        <button class="export-btn csv" onclick="exportCSV()">CSV</button>
       </div>
       <div id="task-list"></div>
     </div>
@@ -643,6 +591,47 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 </div>
 <div class="toast" id="toast"></div>
 
+<div class="modal-overlay" id="edit-modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3>✏️ 업무 수정</h3>
+      <button class="modal-close" onclick="closeEditTask()">×</button>
+    </div>
+    <div class="form-field">
+      <label class="form-label">업무 내용</label>
+      <input class="form-input" id="edit-title" />
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">담당자</label>
+        <input class="form-input" id="edit-assignee" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">마감일</label>
+        <input class="form-input" id="edit-deadline" />
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-field">
+        <label class="form-label">우선순위</label>
+        <select class="form-select" id="edit-priority">
+          <option value="high">🔴 높음</option>
+          <option value="mid">🟡 보통</option>
+          <option value="low">🔵 낮음</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">출처</label>
+        <input class="form-input" id="edit-source" />
+      </div>
+    </div>
+    <div class="modal-btns">
+      <button class="modal-btn cancel" onclick="closeEditTask()">취소</button>
+      <button class="modal-btn save" onclick="saveEditTask()">저장하기</button>
+    </div>
+  </div>
+</div>
+
 <script>
 // LocalStorage Keys
 const LS_TASKS   = 'ctm_tasks';
@@ -660,7 +649,17 @@ const SAMPLE_CALLS = [
   }
 ];
 
-let contacts = JSON.parse(localStorage.getItem(LS_CONTACTS) || 'null') ?? [{name:"이서연", role:"마케팅팀", color:"#EEEDFE", textColor:"#534AB7", monitor:true, calls:0, tasks:0}];
+// ★ 담당자 저장 로직 수정 (충돌 방지 강화)
+let contacts = [];
+const DEFAULT_CONTACTS = [{name:"이서연", role:"마케팅팀", color:"#EEEDFE", textColor:"#534AB7", monitor:true, calls:0, tasks:0}];
+try {
+  const savedContacts = localStorage.getItem(LS_CONTACTS);
+  contacts = savedContacts ? JSON.parse(savedContacts) : DEFAULT_CONTACTS;
+  if (!Array.isArray(contacts)) contacts = DEFAULT_CONTACTS;
+} catch(e) {
+  contacts = DEFAULT_CONTACTS;
+}
+
 function saveContacts() { localStorage.setItem(LS_CONTACTS, JSON.stringify(contacts)); }
 
 let selectedColor = { bg:'#E1F5EE', text:'#0F6E56' };
@@ -683,7 +682,7 @@ let idCounter = tasks.length ? Math.max(...tasks.map(t=>t.id)) + 1 : 1;
 let curFilter = 'all';
 let pendingTasks = [];
 
-/* 구글 AI 스튜디오 키 사용 */
+/* 구글 AI 스튜디오 키 사용 (2.5 모델명 수정 포함) */
 let savedApiKey = localStorage.getItem('ctm_gemini_key') || '';
 window.onload = () => { if(savedApiKey) { document.getElementById('api-key-input').value = savedApiKey; saveApiKey(); } }
 
@@ -715,7 +714,7 @@ function saveApiKey() {
   const b = document.getElementById('api-banner');
   b.className = 'api-banner api-ok';
   b.innerHTML = `<div class="api-banner-title">✅ API 키 저장됨 — 실제 AI 분석 모드 (Google Gemini)</div>
-    <p style="font-size:12px;color:var(--text2)">이제 강력한 Gemini 1.5 엔진이 오디오 파일을 직접 듣고 분석합니다.<br>
+    <p style="font-size:12px;color:var(--text2)">이제 강력한 Gemini 엔진이 오디오 파일을 직접 듣고 분석합니다.<br>
     <span style="cursor:pointer;text-decoration:underline;color:var(--text3)" onclick="clearApiKey()">키 삭제하고 데모 모드로 돌아가기</span></p>`;
 }
 function clearApiKey() {
@@ -748,7 +747,6 @@ function seekAudio(e){if(!player||!player.duration)return;const r=e.currentTarge
 function discardRec(){recBlob=null;player=null;document.getElementById('rec-result').classList.remove('show');document.getElementById('voice-name').value='';document.getElementById('playback-bar').style.width='0%';document.getElementById('rec-timer').textContent='00:00';}
 function saveAudioFile() { if(!recBlob) return; const name=document.getElementById('voice-name').value.trim()||'녹음'; const now=new Date(); const filename=`녹음_${name}_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}.webm`; const url=URL.createObjectURL(recBlob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); toast(`💾 "${filename}" 저장됨`); }
 
-/* 오디오 처리 유틸 - Gemini가 오디오(mp3, wav, ogg, aac 등) 직접 지원 */
 const SUPPORTED_TYPES = ['audio/mp3', 'audio/wav', 'audio/aac', 'audio/ogg', 'audio/flac', 'audio/x-m4a', 'audio/m4a'];
 function isSupported(file) { return SUPPORTED_TYPES.some(s => (file.type||'').toLowerCase().includes(s.split('/')[1])) || file.name.match(/\.(mp3|wav|aac|ogg|flac|m4a)$/i); }
 
@@ -785,23 +783,16 @@ async function convertToWav(file) {
   });
 }
 
-/* 🚀 핵심: Gemini API 연동 모듈 */
 async function callGeminiAPI(blob, mimeType, senderName, isUpload) {
+  // ★ 최신 2.5 flash 모델 적용 완료 ★
   const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${savedApiKey}`;
   const b64 = await new Promise(res => { const r = new FileReader(); r.onloadend = () => res(r.result.split(',')[1]); r.readAsDataURL(blob); });
-  
-  // 프롬프트 작성 (STT + 구조화된 업무 추출)
   const promptText = `이 오디오는 "${senderName}"의 통화 혹은 지시사항 녹음입니다. 이 음성을 텍스트로 변환하고, 그 안에 포함된 업무 지시사항(할 일)들을 찾아내어 완벽하게 순수한 JSON 포맷으로만 응답하세요. 백틱(\`\`\`)이나 마크다운을 절대 포함하지 마세요.
   형식: {"transcript":"전체 음성 내용", "tasks":[{"title":"업무 제목 요약","deadline":"마감일 (특정 요일이나 날짜, 없으면 '미정')","priority":"high/mid/low 중 하나","assignee":"${senderName}"}]}`;
-
   const res = await fetch(GEMINI_URL, {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      contents: [{ parts: [ { text: promptText }, { inlineData: { mimeType: mimeType, data: b64 } } ] }],
-      generationConfig: { responseMimeType: "application/json" } // 확실하게 JSON 강제 반환
-    })
+    body: JSON.stringify({ contents: [{ parts: [ { text: promptText }, { inlineData: { mimeType: mimeType, data: b64 } } ] }], generationConfig: { responseMimeType: "application/json" } })
   });
-  
   const data = await res.json();
   if (data.error) throw new Error(data.error.message);
   return data.candidates[0].content.parts[0].text;
@@ -820,37 +811,24 @@ function loadSingleFile(file) {
   if(uploadPlayer) uploadPlayer.pause(); uploadPlayer=new Audio(URL.createObjectURL(file)); uploadPlayer.ontimeupdate=updateUploadBar; uploadPlayer.onended=()=>setUploadPlayIcon(false);
   document.getElementById('upload-file-name').textContent=file.name; document.getElementById('upload-file-size').textContent=sizeStr; document.getElementById('upload-bar').style.width='0%'; document.getElementById('upload-time').textContent='0:00'; setUploadPlayIcon(false); document.getElementById('upload-preview').classList.add('show');
 }
-function loadMultiFiles(files) {
-  document.getElementById('upload-preview').classList.remove('show'); files.forEach(f=>fileQueue.push({file:f, id:queueIdCnt++, status:'wait'}));
-  document.getElementById('multi-upload-queue').style.display='block'; document.getElementById('queue-count').textContent=fileQueue.length; renderQueue();
-}
-function renderQueue() {
-  document.getElementById('queue-file-list').innerHTML=fileQueue.map((i,idx)=>`<div class="queue-item ${i.status}"><div class="queue-num">${idx+1}</div><div class="queue-file-name">${escHtml(i.file.name)}</div><div class="queue-status">${{wait:'대기',analyzing:'분석 중...',done:'완료 ✓',error:'오류'}[i.status]}</div>${i.status==='wait'?`<button class="queue-remove" onclick="removeQueueItem(${i.id})"><svg viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button>`:''}</div>`).join('');
-}
+function loadMultiFiles(files) { document.getElementById('upload-preview').classList.remove('show'); files.forEach(f=>fileQueue.push({file:f, id:queueIdCnt++, status:'wait'})); document.getElementById('multi-upload-queue').style.display='block'; document.getElementById('queue-count').textContent=fileQueue.length; renderQueue(); }
+function renderQueue() { document.getElementById('queue-file-list').innerHTML=fileQueue.map((i,idx)=>`<div class="queue-item ${i.status}"><div class="queue-num">${idx+1}</div><div class="queue-file-name">${escHtml(i.file.name)}</div><div class="queue-status">${{wait:'대기',analyzing:'분석 중...',done:'완료 ✓',error:'오류'}[i.status]}</div>${i.status==='wait'?`<button class="queue-remove" onclick="removeQueueItem(${i.id})"><svg viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button>`:''}</div>`).join(''); }
 function removeQueueItem(id) { fileQueue=fileQueue.filter(i=>i.id!==id); document.getElementById('queue-count').textContent=fileQueue.length; if(!fileQueue.length) document.getElementById('multi-upload-queue').style.display='none'; renderQueue(); }
 
 async function analyzeAllFiles() {
   if(isAnalyzing||!fileQueue.length) return; const wait=fileQueue.filter(i=>i.status==='wait'); if(!wait.length) return;
   isAnalyzing=true; const btn=document.getElementById('multi-analyze-btn'); btn.disabled=true; btn.textContent='분석 중...';
   document.getElementById('multi-progress').style.display='block'; const cName=document.getElementById('multi-sender-name').value.trim(); let done=0, allTasks=[];
-  
   for(const item of wait) {
-    item.status='analyzing'; renderQueue(); const sName=cName||item.file.name.replace(/\.[^.]+$/,'');
-    document.getElementById('multi-progress-text').textContent=`"${item.file.name}" 분석 중...`;
-    document.getElementById('multi-progress-count').textContent=`${done}/${wait.length}`;
-    document.getElementById('multi-progress-bar').style.width=`${(done/wait.length)*100}%`;
-    try {
-      const ext = await processSingleBlob(item.file, sName, document.getElementById('multi-progress-text'));
-      allTasks=allTasks.concat(ext); item.status='done';
-    } catch(e) { item.status='error'; console.error(e); }
+    item.status='analyzing'; renderQueue(); const sName=cName||item.file.name.replace(/\.[^.]+$/,''); document.getElementById('multi-progress-text').textContent=`"${item.file.name}" 분석 중...`; document.getElementById('multi-progress-count').textContent=`${done}/${wait.length}`; document.getElementById('multi-progress-bar').style.width=`${(done/wait.length)*100}%`;
+    try { const ext = await processSingleBlob(item.file, sName, document.getElementById('multi-progress-text')); allTasks=allTasks.concat(ext); item.status='done'; } catch(e) { item.status='error'; console.error(e); }
     done++; renderQueue(); document.getElementById('multi-progress-count').textContent=`${done}/${wait.length}`; document.getElementById('multi-progress-bar').style.width=`${(done/wait.length)*100}%`;
   }
   document.getElementById('multi-progress-text').textContent=`✅ 완료! ${allTasks.length}개 업무 추출됨`; document.getElementById('multi-progress-bar').style.width='100%';
   if(allTasks.length>0) {
-    document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:#EEEDFE;color:#534AB7">📂</div><div><h4>다중 파일 분석 완료</h4><div class="atime">${allTasks.length}개 업무 추출</div></div></div><div class="extracted-tasks" style="padding-top:10px;">${allTasks.map(t=>`<div class="task-chip"><div class="task-chip-icon"><svg viewBox="0 0 10 10" stroke="white" stroke-width="1.5" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="task-chip-title">${escHtml(t.title)}</div><div class="task-chip-meta">담당: ${escHtml(t.assignee)} · 마감: ${escHtml(t.deadline)}</div></div></div>`).join('')}<button class="add-btn" id="add-btn" onclick="addExtractedMulti()">업무 목록에 추가하기</button></div></div>`;
-    pendingTasks=allTasks;
+    document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:#EEEDFE;color:#534AB7">📂</div><div><h4>다중 파일 분석 완료</h4><div class="atime">${allTasks.length}개 업무 추출</div></div></div><div class="extracted-tasks" style="padding-top:10px;">${allTasks.map(t=>`<div class="task-chip"><div class="task-chip-icon"><svg viewBox="0 0 10 10" stroke="white" stroke-width="1.5" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="task-chip-title">${escHtml(t.title)}</div><div class="task-chip-meta">담당: ${escHtml(t.assignee)} · 마감: ${escHtml(t.deadline)}</div></div></div>`).join('')}<button class="add-btn" id="add-btn" onclick="addExtractedMulti()">업무 목록에 추가하기</button></div></div>`; pendingTasks=allTasks;
   }
-  isAnalyzing=false; btn.disabled=false; btn.textContent='🚀 전체 파일 순서대로 분석하기'; toast(`✅ ${wait.length}개 파일 분석이 끝났어요!`);
+  isAnalyzing=false; btn.disabled=false; btn.textContent='🚀 전체 파일 순서대로 분석하기'; toast(`✅ ${wait.length}개 파일 분석 완료!`);
 }
 function addExtractedMulti() { tasks=[...pendingTasks,...tasks]; saveTasks(); if(gdAccessToken) gdriveSaveTasks(); document.getElementById('add-btn').textContent=`✓ ${pendingTasks.length}개 추가됨`; document.getElementById('add-btn').disabled=true; pendingTasks=[]; toast('✅ 업무가 추가되었습니다.'); }
 
@@ -858,12 +836,10 @@ async function processSingleBlob(file, senderName, loadingEl) {
   if(!savedApiKey) { await delay(800); return [{id:idCounter++, title:`[데모] ${senderName} 업무요청`, deadline:'미정', priority:'mid', assignee:senderName, caller:`📂 ${senderName}`, sourceType:'upload', status:'wait', done:false, createdAt:Date.now(), doneAt:null}]; }
   const { blob, mimeType, converted } = await prepareAudioForAnalysis(file, loadingEl);
   if(converted && loadingEl) loadingEl.textContent = '✅ 변환 완료 → Gemini 분석 중...';
-  const txt = await callGeminiAPI(blob, mimeType, senderName, true);
-  let parsed; try{ parsed=JSON.parse(txt); }catch(e){ parsed={tasks:[]}; }
+  const txt = await callGeminiAPI(blob, mimeType, senderName, true); let parsed; try{ parsed=JSON.parse(txt); }catch(e){ parsed={tasks:[]}; }
   return (parsed.tasks||[]).map(t=>({ id:idCounter++, title:t.title||'제목없음', deadline:t.deadline||'미정', priority:t.priority||'mid', assignee:t.assignee||senderName, caller:`📂 ${senderName}`, sourceType:'upload', status:'wait', done:false, createdAt:Date.now(), doneAt:null }));
 }
 
-/* 개별 파일 재생 및 분석 */
 function toggleUploadPlay() { if(!uploadPlayer)return; if(uploadPlayer.paused){uploadPlayer.play();setUploadPlayIcon(true);}else{uploadPlayer.pause();setUploadPlayIcon(false);} }
 function setUploadPlayIcon(p) { document.getElementById('upload-play-icon').innerHTML=p?'<rect x="3" y="2" width="3" height="10" fill="#534AB7"/><rect x="8" y="2" width="3" height="10" fill="#534AB7"/>':'<polygon points="3,2 12,7 3,12" fill="#534AB7"/>'; }
 function updateUploadBar() { if(!uploadPlayer||!uploadPlayer.duration)return; document.getElementById('upload-bar').style.width=(uploadPlayer.currentTime/uploadPlayer.duration*100)+'%'; const s=Math.floor(uploadPlayer.currentTime); document.getElementById('upload-time').textContent=Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
@@ -875,11 +851,9 @@ async function analyzeUploadedFile() {
   document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:#EEEDFE;color:#534AB7">📂</div><div><h4>${escHtml(name)}</h4><div class="atime">${escHtml(uploadedBlob.name)}</div></div></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>${savedApiKey?'Gemini AI가 오디오를 듣고 있습니다...':'데모 분석 중...'}</span></div><div id="stream-result"></div></div>`;
   if(savedApiKey) {
     try {
-      const span = document.querySelector('#ai-loading span');
-      const { blob, mimeType, converted } = await prepareAudioForAnalysis(uploadedBlob, span);
+      const span = document.querySelector('#ai-loading span'); const { blob, mimeType, converted } = await prepareAudioForAnalysis(uploadedBlob, span);
       if(converted && span) span.textContent='✅ 브라우저 포맷 호환 완료 → Gemini 분석 중...';
-      const txt = await callGeminiAPI(blob, mimeType, name, true);
-      document.getElementById('ai-loading').remove();
+      const txt = await callGeminiAPI(blob, mimeType, name, true); document.getElementById('ai-loading').remove();
       let parsed; try{ parsed=JSON.parse(txt); }catch(e){ parsed={tasks:[]}; }
       if(parsed.transcript) document.getElementById('stream-result').insertAdjacentHTML('beforebegin',`<div class="transcript-box"><div class="transcript-label">음성 전사 내용</div><div class="transcript-text">${escHtml(parsed.transcript)}</div></div>`);
       renderExtracted(parsed.tasks||[], name, `📂 ${name}`, 'upload');
@@ -897,10 +871,8 @@ async function analyzeVoice() {
   document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:#FCEBEB;color:#A32D2D">🎙</div><div><h4>${name}</h4></div></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>분석 중...</span></div><div id="stream-result"></div></div>`;
   if(savedApiKey){
     try{
-      const { blob, mimeType } = await prepareAudioForAnalysis(recBlob);
-      const txt = await callGeminiAPI(blob, mimeType, name, false);
-      document.getElementById('ai-loading').remove();
-      let p; try{p=JSON.parse(txt);}catch(e){p={tasks:[]};}
+      const { blob, mimeType } = await prepareAudioForAnalysis(recBlob); const txt = await callGeminiAPI(blob, mimeType, name, false);
+      document.getElementById('ai-loading').remove(); let p; try{p=JSON.parse(txt);}catch(e){p={tasks:[]};}
       if(p.transcript) document.getElementById('stream-result').insertAdjacentHTML('beforebegin',`<div class="transcript-box"><div class="transcript-text">${escHtml(p.transcript)}</div></div>`);
       renderExtracted(p.tasks||[], name, `🎙 ${name}`, 'voice');
     }catch(e){ document.getElementById('ai-loading').innerHTML=`<div style="padding:16px;color:red;font-size:13px">⚠️ 오류: ${e.message}</div>`; }
@@ -914,7 +886,7 @@ async function analyzeCall(idx) {
   const c = SAMPLE_CALLS[idx]; document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:${c.color};color:${c.textColor}">${c.initial}</div><div><h4>${c.name}</h4></div></div><div class="transcript-box"><div class="transcript-text">${c.transcript}</div></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>분석 중...</span></div><div id="stream-result"></div></div>`;
   if(savedApiKey){
     try{
-      const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${savedApiKey}`;
+      const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${savedApiKey}`;
       const res = await fetch(GEMINI_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({contents:[{parts:[{text:`발신자:${c.name}\n통화:"${c.transcript}"\n업무추출 JSON만 리턴: {"tasks":[{"title":"제목","deadline":"마감","priority":"high/mid/low","assignee":"${c.name}"}]}`}]}], generationConfig:{responseMimeType:"application/json"} }) });
       const data = await res.json(); document.getElementById('ai-loading').remove();
       let p; try{ p=JSON.parse(data.candidates[0].content.parts[0].text); }catch(e){ p={tasks:[]}; }
@@ -944,6 +916,39 @@ function deleteTask(id){ if(confirm('삭제할까요?')){ tasks=tasks.filter(t=>
 function toggleMemo(id){ document.getElementById('memo-area-'+id).classList.toggle('open'); }
 function addMemo(id){ const inp=document.getElementById('memo-input-'+id); const txt=inp.value.trim(); if(!txt)return; const t=tasks.find(x=>x.id===id); if(!t.memos)t.memos=[]; t.memos.push({text:txt, at:Date.now()}); saveTasks(); inp.value=''; renderTasks(); toggleMemo(id); }
 
+/* ★ 업무 수정 스크립트 ★ */
+let editingTaskId = null;
+function openEditTask(id) {
+  const t = tasks.find(x => x.id === id);
+  if(!t) return;
+  editingTaskId = id;
+  document.getElementById('edit-title').value = t.title;
+  document.getElementById('edit-assignee').value = t.assignee;
+  document.getElementById('edit-deadline').value = t.deadline;
+  document.getElementById('edit-priority').value = t.priority;
+  document.getElementById('edit-source').value = t.caller;
+  document.getElementById('edit-modal').classList.add('show');
+}
+function closeEditTask() {
+  document.getElementById('edit-modal').classList.remove('show');
+  editingTaskId = null;
+}
+function saveEditTask() {
+  if(!editingTaskId) return;
+  const t = tasks.find(x => x.id === editingTaskId);
+  if(!t) return;
+  t.title = document.getElementById('edit-title').value.trim();
+  if(!t.title){ toast('업무 제목을 입력해주세요.'); return; }
+  t.assignee = document.getElementById('edit-assignee').value.trim() || '미지정';
+  t.deadline = document.getElementById('edit-deadline').value.trim() || '미정';
+  t.priority = document.getElementById('edit-priority').value;
+  t.caller = document.getElementById('edit-source').value.trim() || '직접 입력';
+  saveTasks();
+  renderTasks();
+  closeEditTask();
+  toast('✅ 업무가 수정되었습니다.');
+}
+
 function renderTasks() {
   const list = curFilter==='all'?tasks:tasks.filter(t=>t.status===curFilter);
   document.getElementById('task-list').innerHTML = list.length ? list.map(t=>`
@@ -951,7 +956,10 @@ function renderTasks() {
       <div class="task-card-top">
         <div class="task-check ${t.done?'done':''}" onclick="setStatus(${t.id},'${t.done?'wait':'done'}')"><svg viewBox="0 0 10 10" stroke="white" stroke-width="2" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div>
         <div class="task-body"><div class="task-title ${t.done?'done':''}">${escHtml(t.title)}</div><div class="task-tags"><span class="tag tag-person">${escHtml(t.assignee)}</span><span class="tag tag-due">⏰ ${escHtml(t.deadline)}</span><span class="tag tag-source">${escHtml(t.caller)}</span></div></div>
-        <button class="task-delete" onclick="deleteTask(${t.id})">✕</button>
+        <div class="task-actions">
+          <button class="task-action-btn" onclick="openEditTask(${t.id})" title="수정">✏️</button>
+          <button class="task-action-btn del" onclick="deleteTask(${t.id})" title="삭제">✕</button>
+        </div>
       </div>
       <div class="task-progress">
         <button class="prog-btn ${t.status==='wait'?'sel-wait':''}" onclick="setStatus(${t.id},'wait')">대기</button>
@@ -966,21 +974,96 @@ function renderTasks() {
     </div>`).join('') : '<div class="empty">업무가 없습니다.</div>';
 }
 
-function renderArchive(){ document.getElementById('archive-list').innerHTML=Object.keys(archive).map(k=>`<div class="archive-month"><div class="archive-month-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><b>📁 ${k}</b> <span style="font-size:12px;color:gray">${archive[k].length}건</span></div></div><div class="archive-tasks">${archive[k].map(t=>`<div class="archive-task-row"><div class="archive-check"></div><div class="archive-task-title">${escHtml(t.title)}</div></div>`).join('')}</div></div>`).join(''); }
+function renderArchive(){ document.getElementById('archive-list').innerHTML=Object.keys(archive).map(k=>`<div class="archive-month"><div class="archive-month-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><b>📁 ${k}</b> <span style="font-size:12px;color:gray">${archive[k].length}건</span></div></div><div class="archive-tasks">${archive[k].map(t=>`<div class="archive-task-row"><div class="archive-check"><svg viewBox="0 0 8 8" fill="none" stroke="white" stroke-width="1.5"><polyline points="1,4 3,6 7,2"/></svg></div><div class="archive-task-title">${escHtml(t.title)}</div></div>`).join('')}</div></div>`).join(''); }
 
-/* 수출, 알림, 유틸 */
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2800); }
 function escHtml(str){ return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function showPage(id,btn){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); btn.classList.add('active'); if(id==='tasks') renderTasks(); if(id==='contacts') renderContacts(); if(id==='archive') renderArchive(); }
 
-/* Google Drive 로직 */
+/* ★ 구글 드라이브 통신 방식 완전 교체 (안정성 극대화된 fetch API 방식) ★ */
 const GDRIVE_SCOPES='https://www.googleapis.com/auth/drive.file'; let gdAccessToken=localStorage.getItem('ctm_gd_token')||'', gdClientId=localStorage.getItem('ctm_gd_client')||'', gapiReady=false;
 function initGapi(){ if(typeof gapi==='undefined'){setTimeout(initGapi,500);return;} gapi.load('client',async()=>{ await gapi.client.init({discoveryDocs:['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']}); gapiReady=true; if(gdAccessToken){ gapi.client.setToken({access_token:gdAccessToken}); renderGdriveStatus(); } }); }
 function saveGcpConfig(){ const id=document.getElementById('gcp-client-id').value.trim(); if(!id){toast('Client ID 입력바람');return;} gdClientId=id; localStorage.setItem('ctm_gd_client',id); toast('저장됨'); }
 function gdriveSignIn(){ if(!gdClientId)return toast('Client ID 먼저 입력하세요'); const c=google.accounts.oauth2.initTokenClient({client_id:gdClientId, scope:GDRIVE_SCOPES, callback:r=>{if(r.error)return toast('오류'); gdAccessToken=r.access_token; localStorage.setItem('ctm_gd_token',gdAccessToken); gapi.client.setToken({access_token:gdAccessToken}); renderGdriveStatus(); toast('연결됨!');}}); c.requestAccessToken(); }
 function renderGdriveStatus(){ const st=document.getElementById('gdrive-status'); if(!st)return; if(gdAccessToken){ st.className='gdrive-status connected'; document.getElementById('gdrive-status-text').textContent='연결됨'; document.getElementById('gdrive-path-info').style.display='block'; } }
-async function uploadToDrive(fileName, mimeType, content, path){ /* 로직 생략(위 코드와 동일) */ return true; }
-async function gdriveSaveTasks(){ /* ... */ }
+
+async function getOrCreateFolderPath(pathStr) {
+  const parts = pathStr.split('/');
+  let parentId = 'root';
+  for (const name of parts) {
+    const q = encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`);
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`, { headers: { 'Authorization': `Bearer ${gdAccessToken}` } });
+    const data = await res.json();
+    if (data.files && data.files.length > 0) {
+      parentId = data.files[0].id;
+    } else {
+      const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${gdAccessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] })
+      });
+      const createData = await createRes.json();
+      parentId = createData.id;
+    }
+  }
+  return parentId;
+}
+
+async function uploadToDrive(fileName, mimeType, content, folderPath) {
+  if (!gdAccessToken) return false;
+  try {
+    const folderId = await getOrCreateFolderPath(folderPath);
+    const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType });
+    const b64 = await new Promise(res => { const r = new FileReader(); r.onloadend = () => res(r.result.split(',')[1]); r.readAsDataURL(blob); });
+    const boundary = 'ctm_boundary_' + Date.now();
+    const bodyStr = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: fileName, parents: [folderId] })}\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\nContent-Transfer-Encoding: base64\r\n\r\n${b64}\r\n--${boundary}--`;
+    
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${gdAccessToken}`, 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body: bodyStr
+    });
+    if (!res.ok) throw new Error('업로드 실패');
+    return true;
+  } catch(e) { console.error('Drive 오류:', e); return false; }
+}
+
+async function gdriveSaveTasks(){ if(!gdAccessToken)return; const n=new Date(); const ok=await uploadToDrive(`업무목록_${n.getFullYear()}-${n.getMonth()+1}-${n.getDate()}.json`, 'application/json', JSON.stringify({tasks},null,2), 'Work/Total/List'); if(ok) toast('☁️ 업무 목록 자동 저장 완료'); }
+async function gdriveSaveArchive(){ if(!gdAccessToken)return; const n=new Date(); const ok=await uploadToDrive(`월별정리_${n.getFullYear()}-${n.getMonth()+1}.json`, 'application/json', JSON.stringify({archive},null,2), 'Work/Total/List'); if(ok) toast('☁️ 월별 정리 자동 저장 완료'); }
+async function gdriveSaveAudioFile(blob, fname) { return await uploadToDrive(fname, blob.type||'audio/webm', blob, 'Work/Total/Record'); }
+
+async function gdriveSaveTasksManual(){ if(!gdAccessToken){toast('설정에서 드라이브를 연결해주세요.');return;} toast('☁️ 저장 중...'); await gdriveSaveTasks(); toast('✅ 업무 목록 수동 저장 완료'); }
+async function gdriveSaveArchiveManual(){ if(!gdAccessToken){toast('설정에서 드라이브를 연결해주세요.');return;} toast('☁️ 저장 중...'); await gdriveSaveArchive(); toast('✅ 월별 정리 수동 저장 완료'); }
+
+/* 복구 기능도 fetch 로 전환하여 버그 원천 차단 */
+let restoreType='', restoreFileId='';
+async function openRestorePanel(type) {
+  if(!gdAccessToken) { toast('⚠️ 구글 드라이브를 먼저 연결해주세요.'); return; }
+  restoreType = type;
+  document.getElementById('restore-panel').style.display = 'block';
+  document.getElementById('restore-file-list').innerHTML = '불러오는 중...';
+  try {
+    const prefix = type === 'tasks' ? '업무목록_' : '월별정리_';
+    const folderId = await getOrCreateFolderPath('Work/Total/List');
+    const q = encodeURIComponent(`'${folderId}' in parents and name contains '${prefix}' and mimeType='application/json' and trashed=false`);
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&orderBy=modifiedTime desc&spaces=drive`, { headers: { 'Authorization': `Bearer ${gdAccessToken}` } });
+    const data = await res.json();
+    const files = data.files || [];
+    if(!files.length) { document.getElementById('restore-file-list').innerHTML = '백업된 파일이 없습니다.'; return; }
+    document.getElementById('restore-file-list').innerHTML = files.map(f => `<div class="restore-file-item" onclick="selectRestoreFile('${f.id}')"><div class="restore-file-info">${f.name}</div><button class="restore-file-btn">복구</button></div>`).join('');
+  } catch(e) { document.getElementById('restore-file-list').innerHTML = '오류 발생. 다시 시도해주세요.'; }
+}
+function closeRestorePanel() { document.getElementById('restore-panel').style.display='none'; }
+async function selectRestoreFile(id) {
+  if(!confirm('이 시점으로 복구하시겠습니까? (현재 데이터는 덮어씌워집니다)')) return;
+  try {
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, { headers: { 'Authorization': `Bearer ${gdAccessToken}` } });
+    const raw = await res.json();
+    if (restoreType === 'tasks') { tasks = raw.tasks || []; saveTasks(); renderTasks(); toast('✅ 업무 목록 복구 완료!'); } 
+    else { archive = raw.archive || {}; saveArchive(); renderArchive(); toast('✅ 월별 정리 복구 완료!'); }
+    closeRestorePanel();
+  } catch(e) { toast('⚠️ 복구 중 오류가 발생했습니다.'); }
+}
 
 renderTasks(); renderContacts(); renderArchive(); initGapi();
 </script>
