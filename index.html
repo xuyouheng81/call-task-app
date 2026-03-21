@@ -787,7 +787,7 @@ async function convertToWav(file) {
 
 /* 🚀 핵심: Gemini API 연동 모듈 */
 async function callGeminiAPI(blob, mimeType, senderName, isUpload) {
-  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${savedApiKey}`;
+  const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${savedApiKey}`;
   const b64 = await new Promise(res => { const r = new FileReader(); r.onloadend = () => res(r.result.split(',')[1]); r.readAsDataURL(blob); });
   
   // 프롬프트 작성 (STT + 구조화된 업무 추출)
