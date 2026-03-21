@@ -1,3 +1,13 @@
+요청하신 두 가지 기능을 모두 깔끔하게 반영하여 코드를 업데이트했습니다!
+
+1. **샘플 통화 체험 기능 제거:** 분석 탭에 있던 '샘플 통화로 기능 체험' 영역과 관련된 내부 코드를 완전히 삭제하여 화면을 훨씬 넓고 직관적으로 쓰실 수 있게 만들었습니다.
+2. **분석 텍스트 삭제 기능 추가:** 텍스트화된 내용을 지울 수 있도록 두 가지 삭제 기능을 추가했습니다.
+   * **현재 분석 결과 지우기 (화면 닫기):** 파일 분석이 끝나고 화면에 뜬 텍스트 결과 우측 상단에 **닫기(×) 버튼**을 만들었습니다. 이 버튼을 누르면 화면에 남아있는 전사 내용과 추출된 할 일이 즉시 지워집니다.
+   * **전사 기록 전체 삭제:** 화면 맨 아래 '최근 음성 전사 기록' 우측 상단에 **[전체 삭제] 버튼**을 추가했습니다. 한 번의 클릭으로 저장된 모든 통화 텍스트 기록을 깔끔하게 비울 수 있습니다. (물론 개별 기록의 '삭제' 버튼도 그대로 사용 가능합니다.)
+
+아래 완성된 코드를 복사해서 기존 `index.html` 파일에 **전체 덮어쓰기** 해주세요!
+
+```html
 <!DOCTYPE html>
 <html lang="ko">
 <head>
@@ -73,14 +83,58 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .analyze-voice-btn:hover{opacity:0.88;}
 .analyze-voice-btn:disabled{opacity:0.45;cursor:not-allowed;}
 
-/* ── 구분선 ── */
-.divider{display:flex;align-items:center;gap:10px;margin-bottom:14px;}
-.divider-line{flex:1;height:1px;background:var(--border);}
-.divider-text{font-size:12px;color:var(--text3);white-space:nowrap;}
+/* ── 파일 업로드 패널 ── */
+.upload-panel{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
+.upload-panel h3{font-size:15px;font-weight:500;margin-bottom:4px;}
+.upload-panel p{font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.5;}
+.upload-drop-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px 16px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;}
+.upload-drop-zone:hover,.upload-drop-zone.drag-over{border-color:var(--purple);background:var(--purple-light);}
+.upload-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-drop-icon{width:40px;height:40px;background:var(--purple-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;}
+.upload-drop-icon svg{width:18px;height:18px;}
+.upload-drop-text{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;}
+.upload-drop-sub{font-size:12px;color:var(--text3);}
+.fmt-badge{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text3);}
+.upload-preview{display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:14px;}
+.upload-preview.show{display:block;}
+.upload-file-info{display:flex;align-items:center;gap:10px;background:var(--purple-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;}
+.upload-file-icon{width:32px;height:32px;background:var(--purple);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.upload-file-icon svg{width:16px;height:16px;}
+.upload-file-name{font-size:13px;font-weight:500;color:var(--purple);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.upload-file-size{font-size:11px;color:var(--text3);flex-shrink:0;}
+.upload-remove-btn{width:24px;height:24px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--purple);flex-shrink:0;}
+.upload-remove-btn:hover{background:rgba(83,74,183,0.15);}
+.upload-playback-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.upload-play-btn{width:36px;height:36px;border-radius:50%;background:var(--purple-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
+.upload-play-btn svg{width:14px;height:14px;}
+.upload-bar-wrap{flex:1;height:4px;background:var(--border);border-radius:2px;cursor:pointer;}
+.upload-bar{height:4px;background:var(--purple);border-radius:2px;width:0%;transition:width 0.1s;}
+.upload-time{font-size:12px;color:var(--text3);min-width:36px;text-align:right;}
+.upload-name-row{display:flex;gap:8px;margin-bottom:10px;}
+.upload-analyze-btn{width:100%;padding:11px;background:var(--purple);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;}
+.upload-analyze-btn:hover{opacity:0.88;}
+.upload-analyze-btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+/* ── 다중 파일 대기열 ── */
+.queue-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;}
+.queue-item.done{opacity:0.55;}
+.queue-item.analyzing{border-color:var(--purple);background:var(--purple-light);}
+.queue-item.error{border-color:var(--red-mid);background:var(--red-light);}
+.queue-num{width:22px;height:22px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text3);flex-shrink:0;}
+.queue-item.analyzing .queue-num{background:var(--purple);color:white;}
+.queue-item.done .queue-num{background:var(--teal-mid);color:white;}
+.queue-item.error .queue-num{background:var(--red-mid);color:white;}
+.queue-file-name{flex:1;font-size:13px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.queue-status{font-size:11px;color:var(--text3);flex-shrink:0;}
+.queue-item.analyzing .queue-status{color:var(--purple);}
+.queue-item.done .queue-status{color:var(--teal);}
+.queue-item.error .queue-status{color:var(--red);}
+.queue-remove{width:20px;height:20px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0;padding:0;}
+.queue-remove:hover{background:var(--red-light);color:var(--red);}
 
 /* ── 분석 카드 ── */
 .analysis-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;}
-.analysis-header{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.analysis-header{padding:12px 16px;display:flex;align-items:center;border-bottom:1px solid var(--border);background:var(--surface2);}
 .caller-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:13px;flex-shrink:0;}
 .analysis-header h4{font-size:14px;font-weight:500;}
 .atime{font-size:12px;color:var(--text3);}
@@ -99,6 +153,16 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .add-btn{width:100%;padding:11px;background:var(--teal);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;}
 .add-btn:hover{opacity:0.88;}
 .add-btn:disabled{opacity:0.45;cursor:not-allowed;}
+
+/* ── 전사 기록 (History) ── */
+.history-section { margin-top:24px; padding-top:16px; border-top:1px dashed var(--border); }
+.history-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:10px; overflow:hidden; }
+.history-header { padding:12px 14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:var(--surface2); }
+.history-title { font-size:13px; font-weight:600; color:var(--text); display:flex; align-items:center; }
+.history-meta { font-size:11px; color:var(--text3); margin-top:4px; }
+.history-body { display:none; padding:14px; border-top:1px solid var(--border); font-size:13px; line-height:1.6; color:var(--text2); white-space:pre-wrap; background:var(--surface); }
+.history-body.open { display:block; }
+.history-del { color:var(--red); font-size:12px; cursor:pointer; padding:6px 12px; border:1px solid #F09595; background:var(--red-light); border-radius:4px; float:right; margin-top:10px; }
 
 /* ── 업무 직접 추가 폼 ── */
 .add-task-form{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
@@ -135,23 +199,18 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .tag-priority-mid{background:var(--amber-light);color:var(--amber);}
 .tag-priority-low{background:var(--blue-light);color:var(--blue);}
 .tag-source{background:var(--surface2);color:var(--text2);}
-.tag-voice{background:var(--red-light);color:var(--red);}
-.tag-manual{background:var(--green-light);color:var(--green);}
-.tag-upload{background:var(--purple-light);color:var(--purple);}
 .task-progress{display:flex;gap:6px;margin-top:10px;}
 .prog-btn{flex:1;padding:6px 0;font-size:12px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-family:inherit;transition:all 0.15s;}
 .prog-btn.sel-wait{background:var(--coral-light);color:var(--coral);border-color:transparent;font-weight:500;}
 .prog-btn.sel-ing{background:var(--amber-light);color:var(--amber);border-color:transparent;font-weight:500;}
 .prog-btn.sel-done{background:var(--teal-light);color:var(--teal);border-color:transparent;font-weight:500;}
 .empty{text-align:center;padding:40px 20px;color:var(--text3);font-size:14px;line-height:1.8;}
-
-/* 수정/삭제 버튼 영역 */
 .task-actions { display:flex; gap:6px; flex-shrink:0; align-items:flex-start; }
 .task-action-btn{width:26px;height:26px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);}
 .task-action-btn:hover{background:var(--surface2);color:var(--text);}
 .task-action-btn.del:hover{background:var(--red-light);color:var(--red);}
 
-/* 업무 수정 팝업(모달) */
+/* 업무 수정 팝업 */
 .modal-overlay { position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.5); display:none; justify-content:center; align-items:center; z-index:9999; }
 .modal-overlay.show { display:flex; }
 .modal-content { background:var(--surface); padding:20px; border-radius:var(--radius); width:92%; max-width:380px; box-shadow:0 4px 12px rgba(0,0,0,0.15); }
@@ -189,8 +248,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .archive-month-header:hover{background:var(--surface2);}
 .archive-month-title{font-size:14px;font-weight:500;}
 .archive-month-count{font-size:12px;color:var(--text3);}
-.archive-chevron{transition:transform 0.2s;}
-.archive-chevron.open{transform:rotate(180deg);}
 .archive-tasks{display:none;border-top:1px solid var(--border);}
 .archive-tasks.open{display:block;}
 .archive-task-row{display:flex;align-items:center;gap:10px;padding:10px 16px;border-bottom:1px solid var(--border);}
@@ -198,7 +255,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .archive-check{width:16px;height:16px;border-radius:50%;background:var(--teal-mid);display:flex;align-items:center;justify-content:center;flex-shrink:0;}
 .archive-check svg{width:8px;height:8px;}
 .archive-task-title{font-size:13px;color:var(--text2);text-decoration:line-through;flex:1;}
-.archive-task-meta{font-size:11px;color:var(--text3);}
 .archive-notice{background:var(--teal-light);border:1px solid #9FE1CB;border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:14px;font-size:13px;color:var(--teal);line-height:1.6;}
 
 /* ── 담당자 ── */
@@ -210,10 +266,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .contact-stats{display:flex;gap:10px;margin-top:8px;}
 .c-stat{font-size:12px;color:var(--text2);}
 .c-stat strong{color:var(--text);font-weight:600;}
-.monitor-toggle{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);cursor:pointer;}
-.monitor-toggle.on{background:var(--teal-light);border-color:var(--teal-mid);color:var(--teal);}
-.mdot{width:7px;height:7px;border-radius:50%;background:var(--text3);}
-.mdot.on{background:var(--teal-mid);}
 .color-picker-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
 .color-swatch{width:32px;height:32px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all 0.15s;}
 .color-swatch.selected{border-color:var(--text)!important;transform:scale(1.15);}
@@ -225,71 +277,8 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .export-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 6px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid;transition:all 0.15s;}
 .export-btn svg{width:13px;height:13px;flex-shrink:0;}
 .export-btn.excel{background:#E8F5E9;color:#1B5E20;border-color:#A5D6A7;}
-.export-btn.excel:hover{background:#C8E6C9;}
 .export-btn.pdf{background:#FFEBEE;color:#B71C1C;border-color:#EF9A9A;}
-.export-btn.pdf:hover{background:#FFCDD2;}
 .export-btn.csv{background:#E3F2FD;color:#0D47A1;border-color:#90CAF9;}
-.export-btn.csv:hover{background:#BBDEFB;}
-
-/* ── 다중 파일 대기열 ── */
-.queue-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);margin-bottom:6px;}
-.queue-item.done{opacity:0.55;}
-.queue-item.analyzing{border-color:var(--purple);background:var(--purple-light);}
-.queue-item.error{border-color:var(--red-mid);background:var(--red-light);}
-.queue-num{width:22px;height:22px;border-radius:50%;background:var(--surface2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;color:var(--text3);flex-shrink:0;}
-.queue-item.analyzing .queue-num{background:var(--purple);color:white;}
-.queue-item.done .queue-num{background:var(--teal-mid);color:white;}
-.queue-item.error .queue-num{background:var(--red-mid);color:white;}
-.queue-file-name{flex:1;font-size:13px;color:var(--text);min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.queue-status{font-size:11px;color:var(--text3);flex-shrink:0;}
-.queue-item.analyzing .queue-status{color:var(--purple);}
-.queue-item.done .queue-status{color:var(--teal);}
-.queue-item.error .queue-status{color:var(--red);}
-.queue-remove{width:20px;height:20px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--text3);flex-shrink:0;padding:0;}
-.queue-remove:hover{background:var(--red-light);color:var(--red);}
-
-/* ── 파일 업로드 패널 ── */
-.upload-panel{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:16px;}
-.upload-panel h3{font-size:15px;font-weight:500;margin-bottom:4px;}
-.upload-panel p{font-size:13px;color:var(--text2);margin-bottom:14px;line-height:1.5;}
-.upload-drop-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:24px 16px;text-align:center;cursor:pointer;transition:all 0.2s;position:relative;}
-.upload-drop-zone:hover,.upload-drop-zone.drag-over{border-color:var(--purple);background:var(--purple-light);}
-.upload-drop-zone input[type=file]{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
-.upload-drop-icon{width:40px;height:40px;background:var(--purple-light);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 10px;}
-.upload-drop-icon svg{width:18px;height:18px;}
-.upload-drop-text{font-size:14px;font-weight:500;color:var(--text);margin-bottom:4px;}
-.upload-drop-sub{font-size:12px;color:var(--text3);}
-.upload-file-formats{display:flex;gap:6px;justify-content:center;margin-top:10px;flex-wrap:wrap;}
-.fmt-badge{font-size:11px;padding:2px 8px;border-radius:6px;background:var(--surface);border:1px solid var(--border);color:var(--text3);}
-.upload-preview{display:none;border-top:1px solid var(--border);padding-top:14px;margin-top:14px;}
-.upload-preview.show{display:block;}
-.upload-file-info{display:flex;align-items:center;gap:10px;background:var(--purple-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:12px;}
-.upload-file-icon{width:32px;height:32px;background:var(--purple);border-radius:8px;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.upload-file-icon svg{width:16px;height:16px;}
-.upload-file-name{font-size:13px;font-weight:500;color:var(--purple);flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-.upload-file-size{font-size:11px;color:var(--text3);flex-shrink:0;}
-.upload-remove-btn{width:24px;height:24px;border-radius:50%;border:none;background:transparent;cursor:pointer;display:flex;align-items:center;justify-content:center;color:var(--purple);flex-shrink:0;}
-.upload-remove-btn:hover{background:rgba(83,74,183,0.15);}
-.upload-playback-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
-.upload-play-btn{width:36px;height:36px;border-radius:50%;background:var(--purple-light);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;}
-.upload-play-btn svg{width:14px;height:14px;}
-.upload-bar-wrap{flex:1;height:4px;background:var(--border);border-radius:2px;cursor:pointer;}
-.upload-bar{height:4px;background:var(--purple);border-radius:2px;width:0%;transition:width 0.1s;}
-.upload-time{font-size:12px;color:var(--text3);min-width:36px;text-align:right;}
-.upload-name-row{display:flex;gap:8px;margin-bottom:10px;}
-.upload-analyze-btn{width:100%;padding:11px;background:var(--purple);color:white;border:none;border-radius:var(--radius-sm);font-size:14px;font-weight:500;cursor:pointer;font-family:inherit;}
-.upload-analyze-btn:hover{opacity:0.88;}
-.upload-analyze-btn:disabled{opacity:0.45;cursor:not-allowed;}
-
-/* ── 전사 기록 (History) ── */
-.history-section { margin-top:24px; padding-top:16px; border-top:1px dashed var(--border); }
-.history-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:10px; overflow:hidden; }
-.history-header { padding:12px 14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:var(--surface2); }
-.history-title { font-size:13px; font-weight:600; color:var(--text); display:flex; align-items:center; }
-.history-meta { font-size:11px; color:var(--text3); margin-top:4px; }
-.history-body { display:none; padding:14px; border-top:1px solid var(--border); font-size:13px; line-height:1.6; color:var(--text2); white-space:pre-wrap; background:var(--surface); }
-.history-body.open { display:block; }
-.history-del { color:var(--red); font-size:12px; cursor:pointer; padding:6px 12px; border:1px solid #F09595; background:var(--red-light); border-radius:4px; float:right; margin-top:10px; }
 
 /* ── 토스트 알림 ── */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a18;color:white;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap;pointer-events:none;}
@@ -302,7 +291,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .gdrive-status.connected { background:var(--teal-light); color:var(--teal); border:1px solid #9FE1CB; font-weight:500; }
 .gdrive-connect-btn { width:100%; padding:11px; border:none; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity 0.2s; }
 .gdrive-connect-btn.sign-in { background:#4285F4; color:white; }
-.gdrive-connect-btn.sign-in:hover { opacity:0.9; }
 .gdrive-connect-btn.sign-out { background:var(--surface2); color:var(--text2); border:1px solid var(--border); }
 </style>
 </head>
@@ -398,8 +386,13 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
       <div id="analysis-result"></div>
 
       <div class="history-section">
-        <div class="section-title">📝 최근 음성 전사 기록 (자동 저장)</div>
-        <p style="font-size:12px; color:var(--text3); margin-bottom:12px;">분석이 완료된 음성의 텍스트 변환 기록이 영구 보관됩니다.</p>
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:12px;">
+          <div>
+            <div class="section-title" style="margin-bottom:4px; margin-top:0;">📝 최근 음성 전사 기록 (자동 저장)</div>
+            <p style="font-size:12px; color:var(--text3); margin:0; line-height:1.4;">분석이 완료된 음성의 텍스트 변환 기록이 영구 보관됩니다.</p>
+          </div>
+          <button onclick="clearAllTranscripts()" style="padding:6px 10px; font-size:11px; font-weight:500; background:var(--surface2); border:1px solid var(--border); border-radius:4px; cursor:pointer; color:var(--text2); white-space:nowrap; flex-shrink:0;">전체 삭제</button>
+        </div>
         <div id="transcript-history-list"></div>
       </div>
 
@@ -566,7 +559,7 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 const LS_TASKS   = 'ctm_tasks';
 const LS_ARCHIVE = 'ctm_archive';
 const LS_CONTACTS = 'ctm_contacts';
-const LS_TRANSCRIPTS = 'ctm_transcripts'; // 전사 기록 보관용 키 추가
+const LS_TRANSCRIPTS = 'ctm_transcripts';
 
 let contacts = [];
 const DEFAULT_CONTACTS = [{name:"이서연", role:"마케팅팀", color:"#EEEDFE", textColor:"#534AB7", monitor:true, calls:0, tasks:0}];
@@ -587,7 +580,7 @@ function deleteContact(idx) { if(!confirm('담당자를 삭제할까요?')) retu
 
 let tasks = JSON.parse(localStorage.getItem(LS_TASKS) || '[]');
 let archive = JSON.parse(localStorage.getItem(LS_ARCHIVE) || '{}');
-let transcripts = JSON.parse(localStorage.getItem(LS_TRANSCRIPTS) || '[]'); // 전사 기록 배열
+let transcripts = JSON.parse(localStorage.getItem(LS_TRANSCRIPTS) || '[]'); 
 let idCounter = tasks.length ? Math.max(...tasks.map(t=>t.id)) + 1 : 1;
 let curFilter = 'all';
 let pendingTasks = [];
@@ -597,11 +590,11 @@ function saveTasks() { localStorage.setItem(LS_TASKS, JSON.stringify(tasks)); }
 function saveArchive() { localStorage.setItem(LS_ARCHIVE, JSON.stringify(archive)); }
 function saveTranscripts() { localStorage.setItem(LS_TRANSCRIPTS, JSON.stringify(transcripts)); }
 
-/* 전사 기록 추가 로직 */
+/* ── 전사 기록 추가/삭제 로직 ── */
 function addTranscript(title, type, text, taskCount) {
   if(!text) return;
   transcripts.unshift({ id: Date.now(), title, type, text, taskCount, date: new Date().toISOString() });
-  if(transcripts.length > 50) transcripts.pop(); // 용량 관리를 위해 최근 50개만 보관
+  if(transcripts.length > 50) transcripts.pop(); 
   saveTranscripts();
   renderTranscripts();
 }
@@ -612,6 +605,19 @@ function deleteTranscript(id) {
   saveTranscripts();
   renderTranscripts();
   toast('전사 기록이 삭제되었습니다.');
+}
+
+function clearAllTranscripts() {
+  if(!confirm('저장된 모든 음성 전사 기록을 삭제하시겠습니까?\n(업무 목록에 추가된 데이터는 지워지지 않습니다)')) return;
+  transcripts = [];
+  saveTranscripts();
+  renderTranscripts();
+  toast('모든 기록이 삭제되었습니다.');
+}
+
+function clearAnalysisResult() {
+  document.getElementById('analysis-result').innerHTML = '';
+  pendingTasks = [];
 }
 
 window.onload = () => {
@@ -631,9 +637,7 @@ function saveSettingsApiKey() {
    💾 로컬 백업 및 복구 기능
 ══════════════════════════════════════════════ */
 function exportLocalBackup() {
-  const backupData = {
-    tasks: tasks, archive: archive, contacts: contacts, transcripts: transcripts, exportedAt: new Date().toISOString()
-  };
+  const backupData = { tasks: tasks, archive: archive, contacts: contacts, transcripts: transcripts, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
   const now = new Date(); const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
   const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `통화업무관리_전체백업_${dateStr}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
@@ -650,10 +654,8 @@ function importLocalBackup(e) {
       if(data.archive) archive = data.archive;
       if(data.contacts) contacts = data.contacts;
       if(data.transcripts) transcripts = data.transcripts;
-      
       saveTasks(); saveArchive(); saveContacts(); saveTranscripts();
       idCounter = tasks.length ? Math.max(...tasks.map(t=>t.id)) + 1 : 1;
-      
       renderTasks(); renderArchive(); renderContacts(); renderTranscripts();
       toast('✅ 백업 데이터가 성공적으로 복구되었습니다!');
     } catch(err) { toast('⚠️ 형식이 잘못된 백업 파일입니다.'); }
@@ -689,7 +691,6 @@ function seekAudio(e){if(!player||!player.duration)return;const r=e.currentTarge
 function discardRec(){recBlob=null;player=null;document.getElementById('rec-result').classList.remove('show');document.getElementById('voice-name').value='';document.getElementById('playback-bar').style.width='0%';document.getElementById('rec-timer').textContent='00:00';}
 function saveAudioFile() { if(!recBlob) return; const name=document.getElementById('voice-name').value.trim()||'녹음'; const now=new Date(); const filename=`녹음_${name}_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}.webm`; const url=URL.createObjectURL(recBlob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); toast(`💾 "${filename}" 저장됨`); }
 
-/* ★ WebM 완벽 지원 업데이트 ★ */
 const SUPPORTED_TYPES = ['audio/mp3', 'audio/wav', 'audio/aac', 'audio/ogg', 'audio/flac', 'audio/x-m4a', 'audio/m4a', 'audio/webm', 'video/webm'];
 function isSupported(file) { return SUPPORTED_TYPES.some(s => (file.type||'').toLowerCase().includes(s.split('/')[1])) || file.name.match(/\.(mp3|wav|aac|ogg|flac|m4a|webm)$/i); }
 async function prepareAudioForAnalysis(file, loadingEl) { if (isSupported(file)) return { blob: file, mimeType: file.type || 'audio/mp3', converted: false }; if (loadingEl) loadingEl.textContent = `🔄 변환 중...`; try { const wavBlob = await convertToWav(file); return { blob: wavBlob, mimeType: 'audio/wav', converted: true }; } catch(e) { return { blob: file, mimeType: file.type || 'audio/mp3', converted: false }; } }
@@ -707,12 +708,7 @@ let uploadedBlob=null, uploadPlayer=null, fileQueue=[], queueIdCnt=0, isAnalyzin
 function handleFileSelect(e) { const f=Array.from(e.target.files); if(f.length===1) loadSingleFile(f[0]); else if(f.length>1) loadMultiFiles(f); }
 function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-drop-zone').classList.add('drag-over'); }
 function handleDragLeave(e) { document.getElementById('upload-drop-zone').classList.remove('drag-over'); }
-function handleDrop(e) { 
-  e.preventDefault(); document.getElementById('upload-drop-zone').classList.remove('drag-over'); 
-  // ★ WebM 드래그 드롭 인식 기능 추가 ★
-  const f=Array.from(e.dataTransfer.files).filter(x=>x.type.startsWith('audio/')||x.type==='video/webm'||x.name.match(/\.(aac|m4a|mp3|wav|ogg|webm)$/i)); 
-  if(!f.length){ toast('오디오 파일만 가능합니다'); return; } if(f.length===1) loadSingleFile(f[0]); else loadMultiFiles(f); 
-}
+function handleDrop(e) { e.preventDefault(); document.getElementById('upload-drop-zone').classList.remove('drag-over'); const f=Array.from(e.dataTransfer.files).filter(x=>x.type.startsWith('audio/')||x.type==='video/webm'||x.name.match(/\.(aac|m4a|mp3|wav|ogg|webm)$/i)); if(!f.length){ toast('오디오 파일만 가능합니다'); return; } if(f.length===1) loadSingleFile(f[0]); else loadMultiFiles(f); }
 function loadSingleFile(file) { document.getElementById('multi-upload-queue').style.display = 'none'; fileQueue=[]; uploadedBlob=file; const sizeMB=(file.size/(1024*1024)).toFixed(1); const sizeStr=file.size>1024*1024?`${sizeMB} MB`:`${Math.round(file.size/1024)} KB`; if(uploadPlayer) uploadPlayer.pause(); uploadPlayer=new Audio(URL.createObjectURL(file)); uploadPlayer.ontimeupdate=updateUploadBar; uploadPlayer.onended=()=>setUploadPlayIcon(false); document.getElementById('upload-file-name').textContent=file.name; document.getElementById('upload-file-size').textContent=sizeStr; document.getElementById('upload-bar').style.width='0%'; document.getElementById('upload-time').textContent='0:00'; setUploadPlayIcon(false); document.getElementById('upload-preview').classList.add('show'); }
 function loadMultiFiles(files) { document.getElementById('upload-preview').classList.remove('show'); files.forEach(f=>fileQueue.push({file:f, id:queueIdCnt++, status:'wait'})); document.getElementById('multi-upload-queue').style.display='block'; document.getElementById('queue-count').textContent=fileQueue.length; renderQueue(); }
 function renderQueue() { document.getElementById('queue-file-list').innerHTML=fileQueue.map((i,idx)=>`<div class="queue-item ${i.status}"><div class="queue-num">${idx+1}</div><div class="queue-file-name">${escHtml(i.file.name)}</div><div class="queue-status">${{wait:'대기',analyzing:'분석 중...',done:'완료 ✓',error:'오류'}[i.status]}</div>${i.status==='wait'?`<button class="queue-remove" onclick="removeQueueItem(${i.id})"><svg viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button>`:''}</div>`).join(''); }
@@ -722,13 +718,21 @@ async function analyzeAllFiles() {
   if(isAnalyzing||!fileQueue.length) return; const wait=fileQueue.filter(i=>i.status==='wait'); if(!wait.length) return;
   if(!savedApiKey){ toast('⚠️ 설정 탭에서 API 키를 먼저 입력해주세요!'); return; }
   isAnalyzing=true; const btn=document.getElementById('multi-analyze-btn'); btn.disabled=true; btn.textContent='분석 중...'; document.getElementById('multi-progress').style.display='block'; const cName=document.getElementById('multi-sender-name').value.trim(); let done=0, allTasks=[];
+  
+  // 닫기(×) 버튼이 추가된 다중 분석 카드 골격
+  document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header" style="justify-content:space-between"><div style="display:flex; align-items:center; gap:10px"><div class="caller-avatar" style="background:#EEEDFE;color:#534AB7">📂</div><div><h4>다중 파일 분석 진행중</h4><div class="atime" id="multi-header-atime">대기 중</div></div></div><button onclick="clearAnalysisResult()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);padding:0 4px;line-height:1;">&times;</button></div><div class="extracted-tasks" style="padding-top:10px;" id="multi-stream-result"></div></div>`;
+  
   for(const item of wait) {
     item.status='analyzing'; renderQueue(); const sName=cName||item.file.name.replace(/\.[^.]+$/,''); document.getElementById('multi-progress-text').textContent=`"${item.file.name}" 분석 중...`; document.getElementById('multi-progress-count').textContent=`${done}/${wait.length}`; document.getElementById('multi-progress-bar').style.width=`${(done/wait.length)*100}%`;
     try { const ext = await processSingleBlob(item.file, sName, document.getElementById('multi-progress-text')); allTasks=allTasks.concat(ext); item.status='done'; } catch(e) { item.status='error'; console.error(e); }
     done++; renderQueue(); document.getElementById('multi-progress-count').textContent=`${done}/${wait.length}`; document.getElementById('multi-progress-bar').style.width=`${(done/wait.length)*100}%`;
   }
   document.getElementById('multi-progress-text').textContent=`✅ 완료! ${allTasks.length}개 업무 추출됨`; document.getElementById('multi-progress-bar').style.width='100%';
-  if(allTasks.length>0) { document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:#EEEDFE;color:#534AB7">📂</div><div><h4>다중 파일 분석 완료</h4><div class="atime">${allTasks.length}개 업무 추출</div></div></div><div class="extracted-tasks" style="padding-top:10px;">${allTasks.map(t=>`<div class="task-chip"><div class="task-chip-icon"><svg viewBox="0 0 10 10" stroke="white" stroke-width="1.5" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="task-chip-title">${escHtml(t.title)}</div><div class="task-chip-meta">담당: ${escHtml(t.assignee)} · 마감: ${escHtml(t.deadline)}</div></div></div>`).join('')}<button class="add-btn" id="add-btn" onclick="addExtractedMulti()">업무 목록에 추가하기</button></div></div>`; pendingTasks=allTasks; }
+  if(allTasks.length>0) { 
+    document.getElementById('multi-header-atime').textContent = `${allTasks.length}개 업무 추출 완료`;
+    document.getElementById('multi-stream-result').innerHTML=`${allTasks.map(t=>`<div class="task-chip"><div class="task-chip-icon"><svg viewBox="0 0 10 10" stroke="white" stroke-width="1.5" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="task-chip-title">${escHtml(t.title)}</div><div class="task-chip-meta">담당: ${escHtml(t.assignee)} · 마감: ${escHtml(t.deadline)}</div></div></div>`).join('')}<button class="add-btn" id="add-btn" onclick="addExtractedMulti()">업무 목록에 추가하기</button>`; 
+    pendingTasks=allTasks; 
+  }
   isAnalyzing=false; btn.disabled=false; btn.textContent='🚀 전체 파일 순서대로 분석하기'; toast(`✅ ${wait.length}개 파일 분석 완료!`);
 }
 function addExtractedMulti() { tasks=[...pendingTasks,...tasks]; saveTasks(); if(gdAccessToken) gdriveSaveTasks(); document.getElementById('add-btn').textContent=`✓ ${pendingTasks.length}개 추가됨`; document.getElementById('add-btn').disabled=true; pendingTasks=[]; toast('✅ 업무가 추가되었습니다.'); }
@@ -736,10 +740,7 @@ function addExtractedMulti() { tasks=[...pendingTasks,...tasks]; saveTasks(); if
 async function processSingleBlob(file, senderName, loadingEl) {
   const { blob, mimeType, converted } = await prepareAudioForAnalysis(file, loadingEl); if(converted && loadingEl) loadingEl.textContent = '✅ 변환 완료 → Gemini 분석 중...';
   const txt = await callGeminiAPI(blob, mimeType, senderName, true); let parsed; try{ parsed=JSON.parse(txt); }catch(e){ parsed={tasks:[]}; }
-  
-  /* 전사 기록 저장 로직 연결 */
   if (parsed.transcript) addTranscript(senderName, 'upload', parsed.transcript, parsed.tasks ? parsed.tasks.length : 0);
-  
   return (parsed.tasks||[]).map(t=>({ id:idCounter++, title:t.title||'제목없음', deadline:t.deadline||'미정', priority:t.priority||'mid', assignee:t.assignee||senderName, caller:`📂 ${senderName}`, sourceType:'upload', status:'wait', done:false, createdAt:Date.now(), doneAt:null }));
 }
 
@@ -751,14 +752,17 @@ function removeUploadedFile() { if(uploadPlayer){uploadPlayer.pause();uploadPlay
 
 async function analyzeUploadedFile() {
   if(!uploadedBlob) return; const name=document.getElementById('upload-sender-name').value.trim()||'업로드 파일'; const btn=document.getElementById('upload-analyze-btn'); btn.disabled=true; btn.textContent='분석 중...';
-  document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:#EEEDFE;color:#534AB7">📂</div><div><h4>${escHtml(name)}</h4><div class="atime">${escHtml(uploadedBlob.name)}</div></div></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>${savedApiKey?'Gemini AI가 오디오를 듣고 있습니다...':'데모 분석 중...'}</span></div><div id="stream-result"></div></div>`;
+  
+  // 닫기(×) 버튼이 포함된 단일 파일 분석 카드 골격
+  document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header" style="justify-content:space-between"><div style="display:flex; align-items:center; gap:10px"><div class="caller-avatar" style="background:#EEEDFE;color:#534AB7">📂</div><div><h4>${escHtml(name)}</h4><div class="atime">${escHtml(uploadedBlob.name)}</div></div></div><button onclick="clearAnalysisResult()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);padding:0 4px;line-height:1;">&times;</button></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>${savedApiKey?'Gemini AI가 오디오를 듣고 있습니다...':'데모 분석 중...'}</span></div><div id="stream-result"></div></div>`;
+  
   if(savedApiKey) {
     try { const span = document.querySelector('#ai-loading span'); const { blob, mimeType, converted } = await prepareAudioForAnalysis(uploadedBlob, span); if(converted && span) span.textContent='✅ 브라우저 포맷 호환 완료 → Gemini 분석 중...';
       const txt = await callGeminiAPI(blob, mimeType, name, true); document.getElementById('ai-loading').remove(); let parsed; try{ parsed=JSON.parse(txt); }catch(e){ parsed={tasks:[]}; }
       
       if(parsed.transcript) {
         document.getElementById('stream-result').insertAdjacentHTML('beforebegin',`<div class="transcript-box"><div class="transcript-label">음성 전사 내용</div><div class="transcript-text">${escHtml(parsed.transcript)}</div></div>`);
-        addTranscript(name, 'upload', parsed.transcript, parsed.tasks ? parsed.tasks.length : 0); // 전사 기록 영구 저장
+        addTranscript(name, 'upload', parsed.transcript, parsed.tasks ? parsed.tasks.length : 0);
       }
       
       renderExtracted(parsed.tasks||[], name, `📂 ${name}`, 'upload');
@@ -773,14 +777,17 @@ async function analyzeUploadedFile() {
 
 async function analyzeVoice() {
   if(!recBlob) return; const name=document.getElementById('voice-name').value.trim()||'직접 녹음'; const btn=document.getElementById('analyze-voice-btn'); btn.disabled=true; btn.textContent='분석 중...';
-  document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:#FCEBEB;color:#A32D2D">🎙</div><div><h4>${name}</h4></div></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>분석 중...</span></div><div id="stream-result"></div></div>`;
+  
+  // 닫기(×) 버튼이 포함된 직접 음성 분석 카드 골격
+  document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header" style="justify-content:space-between"><div style="display:flex; align-items:center; gap:10px"><div class="caller-avatar" style="background:#FCEBEB;color:#A32D2D">🎙</div><div><h4>${name}</h4></div></div><button onclick="clearAnalysisResult()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);padding:0 4px;line-height:1;">&times;</button></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>분석 중...</span></div><div id="stream-result"></div></div>`;
+  
   if(savedApiKey){
     try{ const { blob, mimeType } = await prepareAudioForAnalysis(recBlob); const txt = await callGeminiAPI(blob, mimeType, name, false);
       document.getElementById('ai-loading').remove(); let p; try{p=JSON.parse(txt);}catch(e){p={tasks:[]};}
       
       if(p.transcript) {
         document.getElementById('stream-result').insertAdjacentHTML('beforebegin',`<div class="transcript-box"><div class="transcript-text">${escHtml(p.transcript)}</div></div>`);
-        addTranscript(name, 'voice', p.transcript, p.tasks ? p.tasks.length : 0); // 전사 기록 영구 저장
+        addTranscript(name, 'voice', p.transcript, p.tasks ? p.tasks.length : 0);
       }
       
       renderExtracted(p.tasks||[], name, `🎙 ${name}`, 'voice');
@@ -924,7 +931,8 @@ initGapi();
 renderTasks();
 renderContacts();
 renderArchive();
-renderTranscripts(); // 페이지 로드 시 전사 기록 렌더링 추가
+renderTranscripts();
 </script>
 </body>
 </html>
+```
