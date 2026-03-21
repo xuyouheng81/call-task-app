@@ -1191,7 +1191,7 @@ async function analyzeAllFiles() {
     progressBar.style.width = `${(done / total) * 100}%`;
 
     try {
-      const extracted = await analyzeSingleBlob(item.file, senderName);
+      const extracted = await analyzeSingleBlob(item.file, senderName, document.getElementById('multi-progress-text'));
       allExtracted = allExtracted.concat(extracted);
       item.status = 'done';
     } catch(e) {
@@ -1258,15 +1258,111 @@ function addExtractedMulti() {
   toast(`✅ 업무 목록에 추가됐습니다.`);
 }
 
+/* ══════════════════════════════════════════════
+   🔄 오디오 자동 변환 (m4a, amr 등 → mp3/wav)
+   ── 쉽게 말하면 ──
+   브라우저 내장 Web Audio API로 오디오를 디코딩한 뒤
+   WAV 형식으로 재인코딩해서 Claude가 읽을 수 있게 만들어요.
+   설치 불필요, 완전 무료!
+══════════════════════════════════════════════ */
+
+/* Claude API가 지원하는 형식 목록 */
+const SUPPORTED_TYPES = ['audio/mpeg','audio/mp3','audio/wav','audio/webm','audio/ogg','audio/flac'];
+
+/* 파일이 지원되는 형식인지 확인 */
+function isSupported(file) {
+  const t = file.type.toLowerCase();
+  return SUPPORTED_TYPES.some(s => t.includes(s.split('/')[1]));
+}
+
+/* 지원 안 되는 파일 → WAV로 자동 변환 */
+async function convertToWav(file) {
+  return new Promise(async (resolve, reject) => {
+    try {
+      // 파일을 ArrayBuffer로 읽기
+      const arrayBuf = await file.arrayBuffer();
+
+      // Web Audio API로 디코딩 (m4a, amr, aac 등 브라우저가 재생 가능한 모든 형식 처리)
+      const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const audioBuf = await audioCtx.decodeAudioData(arrayBuf);
+      audioCtx.close();
+
+      // WAV 파일로 인코딩
+      const wavBlob = audioBufferToWav(audioBuf);
+      resolve(wavBlob);
+    } catch(e) {
+      reject(e);
+    }
+  });
+}
+
+/* AudioBuffer → WAV Blob 변환 */
+function audioBufferToWav(buffer) {
+  const numCh     = buffer.numberOfChannels;
+  const sampleRate= buffer.sampleRate;
+  const length    = buffer.length * numCh * 2; // 16bit = 2bytes
+  const wavBuf    = new ArrayBuffer(44 + length);
+  const view      = new DataView(wavBuf);
+
+  // WAV 헤더 작성
+  const writeStr = (o, s) => { for(let i=0;i<s.length;i++) view.setUint8(o+i, s.charCodeAt(i)); };
+  writeStr(0, 'RIFF');
+  view.setUint32(4, 36 + length, true);
+  writeStr(8, 'WAVE');
+  writeStr(12, 'fmt ');
+  view.setUint32(16, 16, true);        // PCM
+  view.setUint16(20, 1, true);         // PCM 형식
+  view.setUint16(22, numCh, true);
+  view.setUint32(24, sampleRate, true);
+  view.setUint32(28, sampleRate * numCh * 2, true);
+  view.setUint16(32, numCh * 2, true);
+  view.setUint16(34, 16, true);        // 16bit
+  writeStr(36, 'data');
+  view.setUint32(40, length, true);
+
+  // 오디오 데이터 작성 (float → 16bit int 변환)
+  let offset = 44;
+  for (let i = 0; i < buffer.length; i++) {
+    for (let ch = 0; ch < numCh; ch++) {
+      const sample = Math.max(-1, Math.min(1, buffer.getChannelData(ch)[i]));
+      view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true);
+      offset += 2;
+    }
+  }
+  return new Blob([wavBuf], { type: 'audio/wav' });
+}
+
+/* 파일을 Claude 분석용으로 준비 (필요시 자동 변환) */
+async function prepareAudioForAnalysis(file, loadingEl) {
+  if (isSupported(file)) {
+    // 지원되는 형식이면 그대로 반환
+    return { blob: file, mimeType: file.type || 'audio/mpeg', converted: false };
+  }
+
+  // 지원 안 되면 WAV로 변환
+  if (loadingEl) loadingEl.textContent = `🔄 "${file.name}" 변환 중... (자동 변환)`;
+  try {
+    const wavBlob = await convertToWav(file);
+    return { blob: wavBlob, mimeType: 'audio/wav', converted: true };
+  } catch(e) {
+    console.error('변환 실패:', e);
+    // 변환 실패시 원본 파일로 시도
+    return { blob: file, mimeType: file.type || 'audio/mpeg', converted: false };
+  }
+}
+
 /* 파일 1개를 분석해서 task 배열 반환하는 헬퍼 */
-async function analyzeSingleBlob(file, senderName) {
+async function analyzeSingleBlob(file, senderName, loadingEl) {
   if (savedApiKey) {
+    // 자동 변환 처리
+    const { blob, mimeType, converted } = await prepareAudioForAnalysis(file, loadingEl);
+    if (converted && loadingEl) loadingEl.textContent = `✅ 변환 완료 → AI 분석 중...`;
+
     const b64 = await new Promise(res => {
       const r = new FileReader();
       r.onloadend = () => res(r.result.split(',')[1]);
-      r.readAsDataURL(file);
+      r.readAsDataURL(blob);
     });
-    const mimeType = file.type || 'audio/mpeg';
     const res = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: {
@@ -1373,14 +1469,16 @@ async function analyzeUploadedFile() {
 
   if (savedApiKey) {
     try {
-      // 파일을 Base64로 변환
+      // 자동 변환 처리 (m4a, amr 등 → wav)
+      const loadingSpan = document.querySelector('#ai-loading span');
+      const { blob, mimeType, converted } = await prepareAudioForAnalysis(uploadedBlob, loadingSpan);
+      if (converted && loadingSpan) loadingSpan.textContent = '✅ 변환 완료 → AI가 분석 중...';
+
       const b64 = await new Promise(res => {
         const r = new FileReader();
         r.onloadend = () => res(r.result.split(',')[1]);
-        r.readAsDataURL(uploadedBlob);
+        r.readAsDataURL(blob);
       });
-
-      const mimeType = uploadedBlob.type || 'audio/mpeg';
       const res = await fetch("https://api.anthropic.com/v1/messages", {
         method: "POST",
         headers: {
