@@ -78,17 +78,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .divider-line{flex:1;height:1px;background:var(--border);}
 .divider-text{font-size:12px;color:var(--text3);white-space:nowrap;}
 
-/* ── 샘플 통화 ── */
-.demo-calls{display:flex;flex-direction:column;gap:8px;margin-bottom:16px;}
-.demo-call{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px;transition:all 0.15s;text-align:left;width:100%;font-family:inherit;}
-.demo-call:hover{border-color:var(--teal-mid);background:var(--teal-light);}
-.call-avatar{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:600;font-size:14px;flex-shrink:0;}
-.call-info{flex:1;min-width:0;}
-.call-name{font-size:14px;font-weight:500;}
-.call-meta{font-size:12px;color:var(--text2);margin-top:2px;}
-.call-duration{font-size:12px;color:var(--text3);}
-.demo-badge{font-size:10px;background:var(--amber-light);color:var(--amber);padding:2px 7px;border-radius:10px;font-weight:500;margin-left:6px;}
-
 /* ── 분석 카드 ── */
 .analysis-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px;}
 .analysis-header{padding:12px 16px;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border);background:var(--surface2);}
@@ -292,11 +281,21 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .upload-analyze-btn:hover{opacity:0.88;}
 .upload-analyze-btn:disabled{opacity:0.45;cursor:not-allowed;}
 
+/* ── 전사 기록 (History) ── */
+.history-section { margin-top:24px; padding-top:16px; border-top:1px dashed var(--border); }
+.history-card { background:var(--surface); border:1px solid var(--border); border-radius:var(--radius-sm); margin-bottom:10px; overflow:hidden; }
+.history-header { padding:12px 14px; display:flex; justify-content:space-between; align-items:center; cursor:pointer; background:var(--surface2); }
+.history-title { font-size:13px; font-weight:600; color:var(--text); display:flex; align-items:center; }
+.history-meta { font-size:11px; color:var(--text3); margin-top:4px; }
+.history-body { display:none; padding:14px; border-top:1px solid var(--border); font-size:13px; line-height:1.6; color:var(--text2); white-space:pre-wrap; background:var(--surface); }
+.history-body.open { display:block; }
+.history-del { color:var(--red); font-size:12px; cursor:pointer; padding:6px 12px; border:1px solid #F09595; background:var(--red-light); border-radius:4px; float:right; margin-top:10px; }
+
 /* ── 토스트 알림 ── */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a18;color:white;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap;pointer-events:none;}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 
-/* ── ★ 새롭게 디자인된 설정 카드 ── */
+/* ── 설정 카드 ── */
 .settings-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 16px; margin-bottom: 20px; }
 .gdrive-status { display:flex; align-items:center; gap:8px; font-size:12px; padding:10px 12px; border-radius:var(--radius-sm); margin-bottom:12px; }
 .gdrive-status.disconnected { background:var(--surface2); color:var(--text3); border:1px solid var(--border); }
@@ -357,12 +356,12 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 
       <div class="upload-panel">
         <h3>📂 녹음 파일 불러오기</h3>
-        <p>m4a, aac, mp3 등 다양한 오디오 파일을 지원합니다.<br>여러 파일을 동시에 선택하면 순차적으로 분석합니다.</p>
+        <p>m4a, aac, mp3, <b>webm</b> 등 다양한 오디오 파일을 지원합니다.<br>여러 파일을 동시에 선택하면 순차적으로 분석합니다.</p>
         <div class="upload-drop-zone" id="upload-drop-zone" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)" ondrop="handleDrop(event)">
           <input type="file" id="upload-file-input" accept="audio/*,video/webm" multiple onchange="handleFileSelect(event)" />
           <div class="upload-drop-icon"><svg viewBox="0 0 24 24" fill="none" stroke="#534AB7" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg></div>
           <div class="upload-drop-text">파일을 여기에 끌어다 놓거나</div>
-          <div class="upload-drop-sub">탭하여 파일 선택 (.aac, .m4a 등 환영)</div>
+          <div class="upload-drop-sub">탭하여 파일 선택 (.aac, .m4a, .webm 등 환영)</div>
         </div>
 
         <div id="multi-upload-queue" style="display:none; margin-top:14px;">
@@ -395,16 +394,15 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
           <button class="upload-analyze-btn" id="upload-analyze-btn" onclick="analyzeUploadedFile()">AI로 업무지시 분석하기</button>
         </div>
       </div>
-
-      <div class="divider"><div class="divider-line"></div><div class="divider-text">샘플 통화로 기능 체험</div><div class="divider-line"></div></div>
-      <div class="demo-calls">
-        <button class="demo-call" onclick="analyzeCall(1)">
-          <div class="call-avatar" style="background:#EEEDFE;color:#534AB7">이</div>
-          <div class="call-info"><div class="call-name">이서연 (마케팅팀)<span class="demo-badge">데모</span></div><div class="call-meta">오늘 11:15 · 녹음 대기</div></div>
-          <div class="call-duration">5분 41초</div>
-        </button>
-      </div>
+      
       <div id="analysis-result"></div>
+
+      <div class="history-section">
+        <div class="section-title">📝 최근 음성 전사 기록 (자동 저장)</div>
+        <p style="font-size:12px; color:var(--text3); margin-bottom:12px;">분석이 완료된 음성의 텍스트 변환 기록이 영구 보관됩니다.</p>
+        <div id="transcript-history-list"></div>
+      </div>
+
     </div>
 
     <div class="page" id="page-tasks">
@@ -509,11 +507,11 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
         </div>
       </div>
 
-      <div class="section-title">💾 내 기기 백업 및 복구 (가장 확실한 방법)</div>
+      <div class="section-title">💾 내 기기 백업 및 복구</div>
       <div class="settings-card">
         <p style="font-size:12px; color:var(--text2); margin-bottom:14px; line-height:1.6;">
           구글 드라이브 연결이 계속 실패한다면 이 기능을 사용하세요!<br>
-          버튼 한 번으로 현재까지의 <b>모든 데이터(업무목록, 월별정리, 담당자)를 내 스마트폰이나 PC에 안전하게 파일로 저장</b>하고, 언제든 다시 불러올 수 있습니다.
+          버튼 한 번으로 현재까지의 <b>모든 데이터(업무목록, 전사기록, 담당자)를 내 기기에 안전하게 파일로 저장</b>하고, 언제든 다시 불러올 수 있습니다.
         </p>
         <button class="form-submit" style="background:var(--blue); margin-top:0; margin-bottom:10px; padding:12px;" onclick="exportLocalBackup()">
           ⬇️ 내 기기에 전체 백업 파일 다운로드
@@ -567,10 +565,8 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 ══════════════════════════════════════════════ */
 const LS_TASKS   = 'ctm_tasks';
 const LS_ARCHIVE = 'ctm_archive';
-const LS_LAST_RUN= 'ctm_last_archive';
 const LS_CONTACTS = 'ctm_contacts';
-
-const SAMPLE_CALLS = [{ name:"이서연", role:"마케팅팀", color:"#EEEDFE", textColor:"#534AB7", initial:"이", time:"오늘 11:15", transcript:`SNS 콘텐츠 초안 목요일까지 보내주세요. 인스타그램이랑 유튜브 둘 다요. 경쟁사 분석 리포트는 다음 주 수요일까지 부탁드려요.`, demoTasks:[{title:"SNS 콘텐츠 초안 (인스타·유튜브)", deadline:"목요일", priority:"high"},{title:"경쟁사 분석 리포트", deadline:"다음 주 수요일", priority:"mid"}]}];
+const LS_TRANSCRIPTS = 'ctm_transcripts'; // 전사 기록 보관용 키 추가
 
 let contacts = [];
 const DEFAULT_CONTACTS = [{name:"이서연", role:"마케팅팀", color:"#EEEDFE", textColor:"#534AB7", monitor:true, calls:0, tasks:0}];
@@ -588,10 +584,10 @@ function addContact() {
   saveContacts(); document.getElementById('c-name').value=''; document.getElementById('c-role').value=''; renderContacts(); toast(`✅ 담당자 추가됨`);
 }
 function deleteContact(idx) { if(!confirm('담당자를 삭제할까요?')) return; contacts.splice(idx,1); saveContacts(); renderContacts(); }
-function toggleMonitor(i) { contacts[i].monitor = !contacts[i].monitor; saveContacts(); renderContacts(); }
 
 let tasks = JSON.parse(localStorage.getItem(LS_TASKS) || '[]');
 let archive = JSON.parse(localStorage.getItem(LS_ARCHIVE) || '{}');
+let transcripts = JSON.parse(localStorage.getItem(LS_TRANSCRIPTS) || '[]'); // 전사 기록 배열
 let idCounter = tasks.length ? Math.max(...tasks.map(t=>t.id)) + 1 : 1;
 let curFilter = 'all';
 let pendingTasks = [];
@@ -599,6 +595,24 @@ let savedApiKey = localStorage.getItem('ctm_gemini_key') || '';
 
 function saveTasks() { localStorage.setItem(LS_TASKS, JSON.stringify(tasks)); }
 function saveArchive() { localStorage.setItem(LS_ARCHIVE, JSON.stringify(archive)); }
+function saveTranscripts() { localStorage.setItem(LS_TRANSCRIPTS, JSON.stringify(transcripts)); }
+
+/* 전사 기록 추가 로직 */
+function addTranscript(title, type, text, taskCount) {
+  if(!text) return;
+  transcripts.unshift({ id: Date.now(), title, type, text, taskCount, date: new Date().toISOString() });
+  if(transcripts.length > 50) transcripts.pop(); // 용량 관리를 위해 최근 50개만 보관
+  saveTranscripts();
+  renderTranscripts();
+}
+
+function deleteTranscript(id) {
+  if(!confirm('이 전사 기록을 완전히 삭제할까요?')) return;
+  transcripts = transcripts.filter(t => t.id !== id);
+  saveTranscripts();
+  renderTranscripts();
+  toast('전사 기록이 삭제되었습니다.');
+}
 
 window.onload = () => {
   if(savedApiKey) document.getElementById('setting-api-key').value = savedApiKey;
@@ -614,33 +628,20 @@ function saveSettingsApiKey() {
 }
 
 /* ══════════════════════════════════════════════
-   💾 로컬 백업 및 복구 기능 (완전 새 기능)
+   💾 로컬 백업 및 복구 기능
 ══════════════════════════════════════════════ */
 function exportLocalBackup() {
   const backupData = {
-    tasks: tasks,
-    archive: archive,
-    contacts: contacts,
-    exportedAt: new Date().toISOString()
+    tasks: tasks, archive: archive, contacts: contacts, transcripts: transcripts, exportedAt: new Date().toISOString()
   };
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-  const now = new Date();
-  const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
-  
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `통화업무관리_전체백업_${dateStr}.json`;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  const now = new Date(); const dateStr = `${now.getFullYear()}${String(now.getMonth()+1).padStart(2,'0')}${String(now.getDate()).padStart(2,'0')}`;
+  const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = `통화업무관리_전체백업_${dateStr}.json`; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
   toast('💾 백업 파일이 다운로드 되었습니다!');
 }
 
 function importLocalBackup(e) {
-  const file = e.target.files[0];
-  if(!file) return;
+  const file = e.target.files[0]; if(!file) return;
   const reader = new FileReader();
   reader.onload = (event) => {
     try {
@@ -648,34 +649,27 @@ function importLocalBackup(e) {
       if(data.tasks) tasks = data.tasks;
       if(data.archive) archive = data.archive;
       if(data.contacts) contacts = data.contacts;
+      if(data.transcripts) transcripts = data.transcripts;
       
-      saveTasks();
-      saveArchive();
-      saveContacts();
+      saveTasks(); saveArchive(); saveContacts(); saveTranscripts();
       idCounter = tasks.length ? Math.max(...tasks.map(t=>t.id)) + 1 : 1;
       
-      renderTasks();
-      renderArchive();
-      renderContacts();
+      renderTasks(); renderArchive(); renderContacts(); renderTranscripts();
       toast('✅ 백업 데이터가 성공적으로 복구되었습니다!');
-    } catch(err) {
-      toast('⚠️ 형식이 잘못된 백업 파일입니다.');
-      console.error(err);
-    }
-    e.target.value = ''; // Reset input
+    } catch(err) { toast('⚠️ 형식이 잘못된 백업 파일입니다.'); }
+    e.target.value = ''; 
   };
   reader.readAsText(file);
 }
 
 function resetAllData() {
   if(confirm('정말 모든 데이터를 삭제하고 초기화하시겠습니까?\n이 작업은 되돌릴 수 없습니다!')) {
-    localStorage.clear();
-    location.reload();
+    localStorage.clear(); location.reload();
   }
 }
 
 /* ══════════════════════════════════════════════
-   기타 기존 기능들 (분석, 렌더링 등)
+   기존 기능들 (분석, 렌더링 등)
 ══════════════════════════════════════════════ */
 function runArchiveNow() { const count = runArchive(); if(count===0) toast('완료된 업무가 없어요.'); else { toast(`✅ ${count}개 완료 업무 월별 정리됨`); renderTasks(); renderArchive(); } }
 function runArchive() { const doneTasks = tasks.filter(t=>t.status==='done'); if(!doneTasks.length) return 0; doneTasks.forEach(t=>{ const d=new Date(t.doneAt||Date.now()); const key=`${d.getFullYear()}년 ${d.getMonth()+1}월`; if(!archive[key]) archive[key]=[]; archive[key].push(t); }); tasks = tasks.filter(t=>t.status!=='done'); saveTasks(); saveArchive(); if(gdAccessToken){ gdriveSaveTasks(); gdriveSaveArchive(); } return doneTasks.length; }
@@ -695,8 +689,9 @@ function seekAudio(e){if(!player||!player.duration)return;const r=e.currentTarge
 function discardRec(){recBlob=null;player=null;document.getElementById('rec-result').classList.remove('show');document.getElementById('voice-name').value='';document.getElementById('playback-bar').style.width='0%';document.getElementById('rec-timer').textContent='00:00';}
 function saveAudioFile() { if(!recBlob) return; const name=document.getElementById('voice-name').value.trim()||'녹음'; const now=new Date(); const filename=`녹음_${name}_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}.webm`; const url=URL.createObjectURL(recBlob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); toast(`💾 "${filename}" 저장됨`); }
 
-const SUPPORTED_TYPES = ['audio/mp3', 'audio/wav', 'audio/aac', 'audio/ogg', 'audio/flac', 'audio/x-m4a', 'audio/m4a'];
-function isSupported(file) { return SUPPORTED_TYPES.some(s => (file.type||'').toLowerCase().includes(s.split('/')[1])) || file.name.match(/\.(mp3|wav|aac|ogg|flac|m4a)$/i); }
+/* ★ WebM 완벽 지원 업데이트 ★ */
+const SUPPORTED_TYPES = ['audio/mp3', 'audio/wav', 'audio/aac', 'audio/ogg', 'audio/flac', 'audio/x-m4a', 'audio/m4a', 'audio/webm', 'video/webm'];
+function isSupported(file) { return SUPPORTED_TYPES.some(s => (file.type||'').toLowerCase().includes(s.split('/')[1])) || file.name.match(/\.(mp3|wav|aac|ogg|flac|m4a|webm)$/i); }
 async function prepareAudioForAnalysis(file, loadingEl) { if (isSupported(file)) return { blob: file, mimeType: file.type || 'audio/mp3', converted: false }; if (loadingEl) loadingEl.textContent = `🔄 변환 중...`; try { const wavBlob = await convertToWav(file); return { blob: wavBlob, mimeType: 'audio/wav', converted: true }; } catch(e) { return { blob: file, mimeType: file.type || 'audio/mp3', converted: false }; } }
 async function convertToWav(file) { return new Promise(async (resolve, reject) => { try { const arrayBuf = await file.arrayBuffer(); const audioCtx = new (window.AudioContext || window.webkitAudioContext)(); const audioBuf = await audioCtx.decodeAudioData(arrayBuf); audioCtx.close(); const numCh = audioBuf.numberOfChannels; const sampleRate = audioBuf.sampleRate; const length = audioBuf.length * numCh * 2; const wavBuf = new ArrayBuffer(44 + length); const view = new DataView(wavBuf); const writeStr = (o, s) => { for(let i=0;i<s.length;i++) view.setUint8(o+i, s.charCodeAt(i)); }; writeStr(0, 'RIFF'); view.setUint32(4, 36 + length, true); writeStr(8, 'WAVE'); writeStr(12, 'fmt '); view.setUint32(16, 16, true); view.setUint16(20, 1, true); view.setUint16(22, numCh, true); view.setUint32(24, sampleRate, true); view.setUint32(28, sampleRate * numCh * 2, true); view.setUint16(32, numCh * 2, true); view.setUint16(34, 16, true); writeStr(36, 'data'); view.setUint32(40, length, true); let offset = 44; for (let i = 0; i < audioBuf.length; i++) { for (let ch = 0; ch < numCh; ch++) { const sample = Math.max(-1, Math.min(1, audioBuf.getChannelData(ch)[i])); view.setInt16(offset, sample < 0 ? sample * 0x8000 : sample * 0x7FFF, true); offset += 2; } } resolve(new Blob([wavBuf], { type: 'audio/wav' })); } catch(e) { reject(e); } }); }
 
@@ -712,7 +707,12 @@ let uploadedBlob=null, uploadPlayer=null, fileQueue=[], queueIdCnt=0, isAnalyzin
 function handleFileSelect(e) { const f=Array.from(e.target.files); if(f.length===1) loadSingleFile(f[0]); else if(f.length>1) loadMultiFiles(f); }
 function handleDragOver(e) { e.preventDefault(); document.getElementById('upload-drop-zone').classList.add('drag-over'); }
 function handleDragLeave(e) { document.getElementById('upload-drop-zone').classList.remove('drag-over'); }
-function handleDrop(e) { e.preventDefault(); document.getElementById('upload-drop-zone').classList.remove('drag-over'); const f=Array.from(e.dataTransfer.files).filter(x=>x.type.startsWith('audio/')||x.name.match(/\.(aac|m4a|mp3|wav|ogg)$/i)); if(!f.length){ toast('오디오 파일만 가능합니다'); return; } if(f.length===1) loadSingleFile(f[0]); else loadMultiFiles(f); }
+function handleDrop(e) { 
+  e.preventDefault(); document.getElementById('upload-drop-zone').classList.remove('drag-over'); 
+  // ★ WebM 드래그 드롭 인식 기능 추가 ★
+  const f=Array.from(e.dataTransfer.files).filter(x=>x.type.startsWith('audio/')||x.type==='video/webm'||x.name.match(/\.(aac|m4a|mp3|wav|ogg|webm)$/i)); 
+  if(!f.length){ toast('오디오 파일만 가능합니다'); return; } if(f.length===1) loadSingleFile(f[0]); else loadMultiFiles(f); 
+}
 function loadSingleFile(file) { document.getElementById('multi-upload-queue').style.display = 'none'; fileQueue=[]; uploadedBlob=file; const sizeMB=(file.size/(1024*1024)).toFixed(1); const sizeStr=file.size>1024*1024?`${sizeMB} MB`:`${Math.round(file.size/1024)} KB`; if(uploadPlayer) uploadPlayer.pause(); uploadPlayer=new Audio(URL.createObjectURL(file)); uploadPlayer.ontimeupdate=updateUploadBar; uploadPlayer.onended=()=>setUploadPlayIcon(false); document.getElementById('upload-file-name').textContent=file.name; document.getElementById('upload-file-size').textContent=sizeStr; document.getElementById('upload-bar').style.width='0%'; document.getElementById('upload-time').textContent='0:00'; setUploadPlayIcon(false); document.getElementById('upload-preview').classList.add('show'); }
 function loadMultiFiles(files) { document.getElementById('upload-preview').classList.remove('show'); files.forEach(f=>fileQueue.push({file:f, id:queueIdCnt++, status:'wait'})); document.getElementById('multi-upload-queue').style.display='block'; document.getElementById('queue-count').textContent=fileQueue.length; renderQueue(); }
 function renderQueue() { document.getElementById('queue-file-list').innerHTML=fileQueue.map((i,idx)=>`<div class="queue-item ${i.status}"><div class="queue-num">${idx+1}</div><div class="queue-file-name">${escHtml(i.file.name)}</div><div class="queue-status">${{wait:'대기',analyzing:'분석 중...',done:'완료 ✓',error:'오류'}[i.status]}</div>${i.status==='wait'?`<button class="queue-remove" onclick="removeQueueItem(${i.id})"><svg viewBox="0 0 10 10" stroke="currentColor" stroke-width="1.5"><line x1="1" y1="1" x2="9" y2="9"/><line x1="9" y1="1" x2="1" y2="9"/></svg></button>`:''}</div>`).join(''); }
@@ -736,6 +736,10 @@ function addExtractedMulti() { tasks=[...pendingTasks,...tasks]; saveTasks(); if
 async function processSingleBlob(file, senderName, loadingEl) {
   const { blob, mimeType, converted } = await prepareAudioForAnalysis(file, loadingEl); if(converted && loadingEl) loadingEl.textContent = '✅ 변환 완료 → Gemini 분석 중...';
   const txt = await callGeminiAPI(blob, mimeType, senderName, true); let parsed; try{ parsed=JSON.parse(txt); }catch(e){ parsed={tasks:[]}; }
+  
+  /* 전사 기록 저장 로직 연결 */
+  if (parsed.transcript) addTranscript(senderName, 'upload', parsed.transcript, parsed.tasks ? parsed.tasks.length : 0);
+  
   return (parsed.tasks||[]).map(t=>({ id:idCounter++, title:t.title||'제목없음', deadline:t.deadline||'미정', priority:t.priority||'mid', assignee:t.assignee||senderName, caller:`📂 ${senderName}`, sourceType:'upload', status:'wait', done:false, createdAt:Date.now(), doneAt:null }));
 }
 
@@ -751,7 +755,12 @@ async function analyzeUploadedFile() {
   if(savedApiKey) {
     try { const span = document.querySelector('#ai-loading span'); const { blob, mimeType, converted } = await prepareAudioForAnalysis(uploadedBlob, span); if(converted && span) span.textContent='✅ 브라우저 포맷 호환 완료 → Gemini 분석 중...';
       const txt = await callGeminiAPI(blob, mimeType, name, true); document.getElementById('ai-loading').remove(); let parsed; try{ parsed=JSON.parse(txt); }catch(e){ parsed={tasks:[]}; }
-      if(parsed.transcript) document.getElementById('stream-result').insertAdjacentHTML('beforebegin',`<div class="transcript-box"><div class="transcript-label">음성 전사 내용</div><div class="transcript-text">${escHtml(parsed.transcript)}</div></div>`);
+      
+      if(parsed.transcript) {
+        document.getElementById('stream-result').insertAdjacentHTML('beforebegin',`<div class="transcript-box"><div class="transcript-label">음성 전사 내용</div><div class="transcript-text">${escHtml(parsed.transcript)}</div></div>`);
+        addTranscript(name, 'upload', parsed.transcript, parsed.tasks ? parsed.tasks.length : 0); // 전사 기록 영구 저장
+      }
+      
       renderExtracted(parsed.tasks||[], name, `📂 ${name}`, 'upload');
       if(gdAccessToken){ const n=new Date(); gdriveSaveAudioFile(uploadedBlob, `녹음_${name}_${n.getFullYear()}${n.getMonth()+1}${n.getDate()}${uploadedBlob.name.match(/\.[^.]+$/)||'.webm'}`); }
     } catch(e) { document.getElementById('ai-loading').innerHTML=`<div style="padding:16px;color:red;font-size:13px">⚠️ API 오류: ${e.message}</div>`; }
@@ -768,25 +777,18 @@ async function analyzeVoice() {
   if(savedApiKey){
     try{ const { blob, mimeType } = await prepareAudioForAnalysis(recBlob); const txt = await callGeminiAPI(blob, mimeType, name, false);
       document.getElementById('ai-loading').remove(); let p; try{p=JSON.parse(txt);}catch(e){p={tasks:[]};}
-      if(p.transcript) document.getElementById('stream-result').insertAdjacentHTML('beforebegin',`<div class="transcript-box"><div class="transcript-text">${escHtml(p.transcript)}</div></div>`);
+      
+      if(p.transcript) {
+        document.getElementById('stream-result').insertAdjacentHTML('beforebegin',`<div class="transcript-box"><div class="transcript-text">${escHtml(p.transcript)}</div></div>`);
+        addTranscript(name, 'voice', p.transcript, p.tasks ? p.tasks.length : 0); // 전사 기록 영구 저장
+      }
+      
       renderExtracted(p.tasks||[], name, `🎙 ${name}`, 'voice');
     }catch(e){ document.getElementById('ai-loading').innerHTML=`<div style="padding:16px;color:red;font-size:13px">⚠️ 오류: ${e.message}</div>`; }
   } else {
     await delay(1500); document.getElementById('ai-loading').remove(); renderExtracted([{title:'테스트 업무지시',deadline:'오늘',priority:'mid',assignee:name}], name, `🎙 ${name}`, 'voice');
   }
   btn.disabled=false; btn.textContent='AI로 업무지시 분석하기';
-}
-
-async function analyzeCall(idx) {
-  const c = SAMPLE_CALLS[idx]; document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header"><div class="caller-avatar" style="background:${c.color};color:${c.textColor}">${c.initial}</div><div><h4>${c.name}</h4></div></div><div class="transcript-box"><div class="transcript-text">${c.transcript}</div></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>분석 중...</span></div><div id="stream-result"></div></div>`;
-  if(savedApiKey){
-    try{ const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${savedApiKey}`;
-      const res = await fetch(GEMINI_URL, { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify({contents:[{parts:[{text:`발신자:${c.name}\n통화:"${c.transcript}"\n업무추출 JSON만 리턴: {"tasks":[{"title":"제목","deadline":"마감","priority":"high/mid/low","assignee":"${c.name}"}]}`}]}], generationConfig:{responseMimeType:"application/json"} }) });
-      const data = await res.json(); document.getElementById('ai-loading').remove();
-      let p; try{ p=JSON.parse(data.candidates[0].content.parts[0].text); }catch(e){ p={tasks:[]}; }
-      renderExtracted(p.tasks||[], c.name, `📞 ${c.name}`, 'call');
-    }catch(e){ document.getElementById('ai-loading').innerHTML=`<div style="padding:16px;color:red;font-size:13px">⚠️ 오류: ${e.message}</div>`; }
-  }else{ await delay(1000); document.getElementById('ai-loading').remove(); renderExtracted(c.demoTasks.map(t=>({...t,assignee:c.name})), c.name, `📞 ${c.name}`, 'call'); }
 }
 
 function delay(ms){return new Promise(r=>setTimeout(r,ms));}
@@ -841,6 +843,33 @@ function renderTasks() {
 function renderArchive(){ document.getElementById('archive-list').innerHTML=Object.keys(archive).map(k=>`<div class="archive-month"><div class="archive-month-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><b>📁 ${k}</b> <span style="font-size:12px;color:gray">${archive[k].length}건</span></div></div><div class="archive-tasks">${archive[k].map(t=>`<div class="archive-task-row"><div class="archive-check"><svg viewBox="0 0 8 8" fill="none" stroke="white" stroke-width="1.5"><polyline points="1,4 3,6 7,2"/></svg></div><div class="archive-task-title">${escHtml(t.title)}</div></div>`).join('')}</div></div>`).join(''); }
 function renderContacts() { const el = document.getElementById('contact-list'); const countEl = document.getElementById('contact-count'); if (countEl) countEl.textContent = contacts.length; if (!contacts.length) { el.innerHTML = '<div class="empty">담당자가 없어요.</div>'; return; } el.innerHTML = contacts.map((c, i) => { const taskCount = tasks.filter(t => t.assignee === c.name).length; return `<div class="contact-card"><div class="c-avatar" style="background:${c.color};color:${c.textColor}">${c.name[0]}</div><div class="contact-info"><div class="contact-name">${c.name}</div><div class="contact-role">${c.role}</div><div class="contact-stats"><span class="c-stat">업무 <strong>${taskCount}</strong>건</span></div></div><button class="contact-del-btn" onclick="deleteContact(${i})">✕</button></div>`; }).join(''); }
 
+/* ── 전사 기록 렌더링 ── */
+function renderTranscripts() {
+  const el = document.getElementById('transcript-history-list');
+  if(!transcripts.length) {
+    el.innerHTML = '<div class="empty" style="padding:20px; font-size:13px;">아직 저장된 전사 기록이 없습니다.</div>';
+    return;
+  }
+  el.innerHTML = transcripts.map(t => {
+    const d = new Date(t.date);
+    const dateStr = `${d.getFullYear()}.${String(d.getMonth()+1).padStart(2,'0')}.${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    return `
+    <div class="history-card">
+      <div class="history-header" onclick="this.nextElementSibling.classList.toggle('open')">
+        <div>
+          <div class="history-title">${escHtml(t.title)} <span class="fmt-badge" style="margin-left:6px; font-weight:normal; background:var(--surface);">${t.type==='voice'?'직접녹음':'업로드'}</span></div>
+          <div class="history-meta">${dateStr} · 자동 추출 업무: ${t.taskCount}건</div>
+        </div>
+        <div style="font-size:14px;color:var(--text3)">▼</div>
+      </div>
+      <div class="history-body">
+        <div style="margin-bottom:10px">${escHtml(t.text)}</div>
+        <div style="overflow:hidden;"><button class="history-del" onclick="deleteTranscript(${t.id})">삭제</button></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
 function toast(msg){ const el=document.getElementById('toast'); el.textContent=msg; el.classList.add('show'); setTimeout(()=>el.classList.remove('show'),2800); }
 function escHtml(str){ return String(str).replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 function showPage(id,btn){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active')); document.getElementById('page-'+id).classList.add('active'); btn.classList.add('active'); if(id==='tasks') renderTasks(); if(id==='contacts') renderContacts(); if(id==='archive') renderArchive(); if(id==='settings') renderGdriveStatus(); }
@@ -853,7 +882,6 @@ function gdriveSignIn(){
   const id = document.getElementById('setting-client-id').value.trim();
   if(!id) { toast('⚠️ Client ID를 먼저 입력해주세요.'); document.getElementById('setting-client-id').focus(); return; }
   gdClientId = id; localStorage.setItem('ctm_gd_client', id);
-  
   if (typeof google === 'undefined') { toast('⚠️ 구글 스크립트 로딩 중입니다. 잠시 후 다시 시도해주세요.'); return; }
   const c=google.accounts.oauth2.initTokenClient({client_id:gdClientId, scope:GDRIVE_SCOPES, callback:r=>{if(r.error) { toast('⚠️ 로그인 취소 또는 오류 발생'); return; } gdAccessToken=r.access_token; localStorage.setItem('ctm_gd_token',gdAccessToken); gapi.client.setToken({access_token:gdAccessToken}); renderGdriveStatus(); toast('✅ 구글 드라이브에 성공적으로 연결됐습니다!');}}); 
   c.requestAccessToken(); 
@@ -880,7 +908,6 @@ async function getOrCreateFolderPath(pathStr) { const parts = pathStr.split('/')
 async function uploadToDrive(fileName, mimeType, content, folderPath) { if (!gdAccessToken) return false; try { const folderId = await getOrCreateFolderPath(folderPath); const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType }); const b64 = await new Promise(res => { const r = new FileReader(); r.onloadend = () => res(r.result.split(',')[1]); r.readAsDataURL(blob); }); const boundary = 'ctm_boundary_' + Date.now(); const bodyStr = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: fileName, parents: [folderId] })}\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\nContent-Transfer-Encoding: base64\r\n\r\n${b64}\r\n--${boundary}--`; const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': `Bearer ${gdAccessToken}`, 'Content-Type': `multipart/related; boundary=${boundary}` }, body: bodyStr }); if (!res.ok) throw new Error('업로드 실패'); return true; } catch(e) { console.error('Drive 오류:', e); return false; } }
 async function gdriveSaveTasks(){ if(!gdAccessToken)return; const n=new Date(); const ok=await uploadToDrive(`업무목록_${n.getFullYear()}-${n.getMonth()+1}-${n.getDate()}.json`, 'application/json', JSON.stringify({tasks},null,2), 'Work/Total/List'); if(ok) toast('☁️ 업무 목록 자동 저장 완료'); }
 async function gdriveSaveArchive(){ if(!gdAccessToken)return; const n=new Date(); const ok=await uploadToDrive(`월별정리_${n.getFullYear()}-${n.getMonth()+1}.json`, 'application/json', JSON.stringify({archive},null,2), 'Work/Total/List'); if(ok) toast('☁️ 월별 정리 자동 저장 완료'); }
-async function gdriveSaveTasksManual(){ if(!gdAccessToken){toast('구글 드라이브에 먼저 로그인 해주세요.');return;} toast('☁️ 저장 중...'); await gdriveSaveTasks(); toast('✅ 수동 저장 완료'); }
 
 /* 내보내기 로직 생략 없이 그대로 유지 */
 function getExportTasks() { const list = curFilter === 'all' ? tasks : tasks.filter(t => t.status === curFilter); if (!list.length) { toast('내보낼 업무가 없어요.'); return null; } return list; }
@@ -897,6 +924,7 @@ initGapi();
 renderTasks();
 renderContacts();
 renderArchive();
+renderTranscripts(); // 페이지 로드 시 전사 기록 렌더링 추가
 </script>
 </body>
 </html>
