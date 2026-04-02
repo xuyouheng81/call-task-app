@@ -136,7 +136,7 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 @keyframes spin{to{transform:rotate(360deg);}}
 .extracted-tasks{padding:0 16px 14px;}
 
-/* ★ 선택 가능한 Task Chip 디자인 업데이트 ★ */
+/* 선택 가능한 Task Chip */
 .task-chip{display:flex;align-items:flex-start;gap:10px;background:var(--teal-light);border-radius:var(--radius-sm);padding:10px 12px;margin-bottom:8px; cursor:pointer; position:relative; padding-right:40px; transition:all 0.2s;}
 .task-chip:not(.selected){background:var(--surface2); opacity:0.7;}
 .task-chip:not(.selected) .task-chip-icon{background:var(--text3);}
@@ -145,7 +145,6 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .task-chip:not(.selected) .chip-check{border-color:var(--border); background:var(--surface);}
 .chip-check svg{width:12px; height:12px; stroke:var(--teal-mid); stroke-width:2.5; fill:none; stroke-linecap:round; stroke-linejoin:round; display:none;}
 .task-chip.selected .chip-check svg{display:block;}
-
 .task-chip-icon{width:20px;height:20px;background:var(--teal-mid);border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
 .task-chip-icon svg{width:10px;height:10px;}
 .task-chip-title{font-size:13px;font-weight:500;color:var(--teal);}
@@ -162,7 +161,10 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .history-meta { font-size:11px; color:var(--text3); margin-top:4px; }
 .history-body { display:none; padding:14px; border-top:1px solid var(--border); font-size:13px; line-height:1.6; color:var(--text2); white-space:pre-wrap; background:var(--surface); }
 .history-body.open { display:block; }
-.history-del { color:var(--red); font-size:12px; cursor:pointer; padding:6px 12px; border:1px solid #F09595; background:var(--red-light); border-radius:4px; float:right; margin-top:10px; }
+.history-actions { display:flex; justify-content:flex-end; gap:8px; margin-top:12px; border-top:1px solid var(--border); padding-top:12px; }
+.history-btn { font-size:12px; cursor:pointer; padding:6px 12px; border-radius:4px; border:1px solid transparent; font-family:inherit; font-weight:500; }
+.history-btn.edit { color:var(--blue); background:var(--blue-light); border-color:#B5D4F4; }
+.history-btn.del { color:var(--red); background:var(--red-light); border-color:#F09595; }
 
 /* ── 업무 직접 추가 폼 ── */
 .add-task-form{background:var(--surface2);border:1.5px solid var(--border);border-radius:var(--radius);padding:16px;margin-bottom:16px;}
@@ -591,13 +593,25 @@ function saveTasks() { localStorage.setItem(LS_TASKS, JSON.stringify(tasks)); }
 function saveArchive() { localStorage.setItem(LS_ARCHIVE, JSON.stringify(archive)); }
 function saveTranscripts() { localStorage.setItem(LS_TRANSCRIPTS, JSON.stringify(transcripts)); }
 
-/* ── 전사 기록 추가/삭제 로직 ── */
+/* ── 전사 기록 추가/수정/삭제 로직 ── */
 function addTranscript(title, type, text, taskCount) {
   if(!text) return;
   transcripts.unshift({ id: Date.now(), title, type, text, taskCount, date: new Date().toISOString() });
   if(transcripts.length > 50) transcripts.pop(); 
   saveTranscripts();
   renderTranscripts();
+}
+
+function editTranscriptTitle(id) {
+  const t = transcripts.find(x => x.id === id);
+  if(!t) return;
+  const newTitle = prompt('전사 기록의 이름을 수정하세요:', t.title);
+  if(newTitle !== null && newTitle.trim() !== '') {
+    t.title = newTitle.trim();
+    saveTranscripts();
+    renderTranscripts();
+    toast('이름이 수정되었습니다.');
+  }
 }
 
 function deleteTranscript(id) {
@@ -734,14 +748,17 @@ async function analyzeAllFiles() {
   document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header" style="justify-content:space-between"><div style="display:flex; align-items:center; gap:10px"><div class="caller-avatar" style="background:#EEEDFE;color:#534AB7">📂</div><div><h4>다중 파일 분석 진행중</h4><div class="atime" id="multi-header-atime">대기 중</div></div></div><button onclick="clearAnalysisResult()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);padding:0 4px;line-height:1;">&times;</button></div><div class="extracted-tasks" style="padding-top:10px;" id="multi-stream-result"></div></div>`;
   
   for(const item of wait) {
-    item.status='analyzing'; renderQueue(); const sName=cName||item.file.name.replace(/\.[^.]+$/,''); document.getElementById('multi-progress-text').textContent=`"${item.file.name}" 분석 중...`; document.getElementById('multi-progress-count').textContent=`${done}/${wait.length}`; document.getElementById('multi-progress-bar').style.width=`${(done/wait.length)*100}%`;
+    item.status='analyzing'; renderQueue(); 
+    // ★ 다중 파일 업로드 시 기본 이름 8자 제한 적용 ★
+    const sName = cName || item.file.name.replace(/\.[^/.]+$/, "").substring(0, 8); 
+    document.getElementById('multi-progress-text').textContent=`"${item.file.name}" 분석 중...`; document.getElementById('multi-progress-count').textContent=`${done}/${wait.length}`; document.getElementById('multi-progress-bar').style.width=`${(done/wait.length)*100}%`;
     try { const ext = await processSingleBlob(item.file, sName, document.getElementById('multi-progress-text')); allTasks=allTasks.concat(ext); item.status='done'; } catch(e) { item.status='error'; console.error(e); }
     done++; renderQueue(); document.getElementById('multi-progress-count').textContent=`${done}/${wait.length}`; document.getElementById('multi-progress-bar').style.width=`${(done/wait.length)*100}%`;
   }
   document.getElementById('multi-progress-text').textContent=`✅ 완료! ${allTasks.length}개 업무 추출됨`; document.getElementById('multi-progress-bar').style.width='100%';
   if(allTasks.length>0) { 
     document.getElementById('multi-header-atime').textContent = `${allTasks.length}개 업무 추출 완료`;
-    document.getElementById('multi-stream-result').innerHTML=`<div class="transcript-label" style="margin-bottom:10px;display:flex;justify-content:space-between;"><span>추출된 업무지시 <span style="font-weight:normal;color:var(--text3)">(선택/해제 가능)</span></span></div>${allTasks.map(t=>`<div class="task-chip selected" onclick="this.classList.toggle('selected')" data-id="${t.id}"><div class="task-chip-icon"><svg viewBox="0 0 10 10" stroke="white" stroke-width="1.5" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="task-chip-title">${escHtml(t.title)}</div><div class="task-chip-meta">담당: ${escHtml(t.assignee)} · 마감: ${escHtml(t.deadline)}</div></div><div class="chip-check"><svg viewBox="0 0 14 14"><polyline points="3,7 6,10 11,4"/></svg></div></div>`).join('')}<button class="add-btn" id="add-btn" onclick="addExtractedMulti()">선택한 업무 목록에 추가하기</button>`; 
+    document.getElementById('multi-stream-result').innerHTML=`<div class="transcript-label" style="margin-bottom:10px;display:flex;justify-content:space-between;"><span>추출된 업무지시 <span style="font-weight:normal;color:var(--text3)">(터치해서 선택/해제)</span></span></div>${allTasks.map(t=>`<div class="task-chip selected" onclick="this.classList.toggle('selected')" data-id="${t.id}"><div class="task-chip-icon"><svg viewBox="0 0 10 10" stroke="white" stroke-width="1.5" fill="none"><polyline points="1.5,5 4,7.5 8.5,2.5"/></svg></div><div><div class="task-chip-title">${escHtml(t.title)}</div><div class="task-chip-meta">담당: ${escHtml(t.assignee)} · 마감: ${escHtml(t.deadline)}</div></div><div class="chip-check"><svg viewBox="0 0 14 14"><polyline points="3,7 6,10 11,4"/></svg></div></div>`).join('')}<button class="add-btn" id="add-btn" onclick="addExtractedMulti()">선택한 업무 목록에 추가하기</button>`; 
     pendingTasks=allTasks; 
   }
   isAnalyzing=false; btn.disabled=false; btn.textContent='🚀 전체 파일 순서대로 분석하기'; toast(`✅ ${wait.length}개 파일 분석 완료!`);
@@ -776,7 +793,16 @@ function seekUploadAudio(e) { if(!uploadPlayer||!uploadPlayer.duration)return; c
 function removeUploadedFile() { if(uploadPlayer){uploadPlayer.pause();uploadPlayer=null;} uploadedBlob=null; document.getElementById('upload-preview').classList.remove('show'); document.getElementById('upload-file-input').value=''; document.getElementById('upload-sender-name').value=''; }
 
 async function analyzeUploadedFile() {
-  if(!uploadedBlob) return; const name=document.getElementById('upload-sender-name').value.trim()||'업로드 파일'; const btn=document.getElementById('upload-analyze-btn'); btn.disabled=true; btn.textContent='분석 중...';
+  if(!uploadedBlob) return; 
+  
+  // ★ 단일 파일 업로드 시 기본 이름 8자 제한 적용 ★
+  let defaultName = '업로드 파일';
+  if(uploadedBlob && uploadedBlob.name) {
+    defaultName = uploadedBlob.name.replace(/\.[^/.]+$/, "").substring(0, 8);
+  }
+  const name = document.getElementById('upload-sender-name').value.trim() || defaultName;
+  
+  const btn=document.getElementById('upload-analyze-btn'); btn.disabled=true; btn.textContent='분석 중...';
   
   document.getElementById('analysis-result').innerHTML=`<div class="analysis-card"><div class="analysis-header" style="justify-content:space-between"><div style="display:flex; align-items:center; gap:10px"><div class="caller-avatar" style="background:#EEEDFE;color:#534AB7">📂</div><div><h4>${escHtml(name)}</h4><div class="atime">${escHtml(uploadedBlob.name)}</div></div></div><button onclick="clearAnalysisResult()" style="background:none;border:none;font-size:20px;cursor:pointer;color:var(--text3);padding:0 4px;line-height:1;">&times;</button></div><div class="analyzing" id="ai-loading"><div class="spinner"></div><span>${savedApiKey?'Gemini AI가 오디오를 듣고 있습니다...':'데모 분석 중...'}</span></div><div id="stream-result"></div></div>`;
   
@@ -896,7 +922,7 @@ function renderTasks() {
 function renderArchive(){ document.getElementById('archive-list').innerHTML=Object.keys(archive).map(k=>`<div class="archive-month"><div class="archive-month-header" onclick="this.nextElementSibling.classList.toggle('open')"><div><b>📁 ${k}</b> <span style="font-size:12px;color:gray">${archive[k].length}건</span></div></div><div class="archive-tasks">${archive[k].map(t=>`<div class="archive-task-row"><div class="archive-check"><svg viewBox="0 0 8 8" fill="none" stroke="white" stroke-width="1.5"><polyline points="1,4 3,6 7,2"/></svg></div><div class="archive-task-title">${escHtml(t.title)}</div></div>`).join('')}</div></div>`).join(''); }
 function renderContacts() { const el = document.getElementById('contact-list'); const countEl = document.getElementById('contact-count'); if (countEl) countEl.textContent = contacts.length; if (!contacts.length) { el.innerHTML = '<div class="empty">담당자가 없어요.</div>'; return; } el.innerHTML = contacts.map((c, i) => { const taskCount = tasks.filter(t => t.assignee === c.name).length; return `<div class="contact-card"><div class="c-avatar" style="background:${c.color};color:${c.textColor}">${c.name[0]}</div><div class="contact-info"><div class="contact-name">${c.name}</div><div class="contact-role">${c.role}</div><div class="contact-stats"><span class="c-stat">업무 <strong>${taskCount}</strong>건</span></div></div><button class="contact-del-btn" onclick="deleteContact(${i})">✕</button></div>`; }).join(''); }
 
-/* ── 전사 기록 렌더링 ── */
+/* ── 전사 기록 렌더링 (이름 수정 기능 포함) ── */
 function renderTranscripts() {
   const el = document.getElementById('transcript-history-list');
   if(!transcripts.length) {
@@ -917,7 +943,10 @@ function renderTranscripts() {
       </div>
       <div class="history-body">
         <div style="margin-bottom:10px">${escHtml(t.text)}</div>
-        <div style="overflow:hidden;"><button class="history-del" onclick="deleteTranscript(${t.id})">삭제</button></div>
+        <div class="history-actions">
+          <button class="history-btn edit" onclick="editTranscriptTitle(${t.id})">이름 수정</button>
+          <button class="history-btn del" onclick="deleteTranscript(${t.id})">삭제</button>
+        </div>
       </div>
     </div>`;
   }).join('');
