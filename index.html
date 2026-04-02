@@ -259,6 +259,10 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .contact-stats{display:flex;gap:10px;margin-top:8px;}
 .c-stat{font-size:12px;color:var(--text2);}
 .c-stat strong{color:var(--text);font-weight:600;}
+.monitor-toggle{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--surface2);border:1px solid var(--border);border-radius:20px;font-size:12px;color:var(--text2);cursor:pointer;}
+.monitor-toggle.on{background:var(--teal-light);border-color:var(--teal-mid);color:var(--teal);}
+.mdot{width:7px;height:7px;border-radius:50%;background:var(--text3);}
+.mdot.on{background:var(--teal-mid);}
 .color-picker-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px;}
 .color-swatch{width:32px;height:32px;border-radius:50%;border:2px solid transparent;cursor:pointer;transition:all 0.15s;}
 .color-swatch.selected{border-color:var(--text)!important;transform:scale(1.15);}
@@ -270,8 +274,11 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .export-btn{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;padding:9px 6px;border-radius:var(--radius-sm);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;border:1.5px solid;transition:all 0.15s;}
 .export-btn svg{width:13px;height:13px;flex-shrink:0;}
 .export-btn.excel{background:#E8F5E9;color:#1B5E20;border-color:#A5D6A7;}
+.export-btn.excel:hover{background:#C8E6C9;}
 .export-btn.pdf{background:#FFEBEE;color:#B71C1C;border-color:#EF9A9A;}
+.export-btn.pdf:hover{background:#FFCDD2;}
 .export-btn.csv{background:#E3F2FD;color:#0D47A1;border-color:#90CAF9;}
+.export-btn.csv:hover{background:#BBDEFB;}
 
 /* ── 토스트 알림 ── */
 .toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(20px);background:#1a1a18;color:white;padding:10px 18px;border-radius:20px;font-size:13px;opacity:0;transition:all 0.3s;z-index:999;white-space:nowrap;pointer-events:none;}
@@ -284,6 +291,7 @@ body{font-family:-apple-system,'Noto Sans KR',sans-serif;background:var(--bg);co
 .gdrive-status.connected { background:var(--teal-light); color:var(--teal); border:1px solid #9FE1CB; font-weight:500; }
 .gdrive-connect-btn { width:100%; padding:11px; border:none; border-radius:var(--radius-sm); font-size:13px; font-weight:500; cursor:pointer; font-family:inherit; display:flex; align-items:center; justify-content:center; gap:8px; transition:opacity 0.2s; }
 .gdrive-connect-btn.sign-in { background:#4285F4; color:white; }
+.gdrive-connect-btn.sign-in:hover { opacity:0.9; }
 .gdrive-connect-btn.sign-out { background:var(--surface2); color:var(--text2); border:1px solid var(--border); }
 
 /* ── 토글 스위치 ── */
@@ -420,10 +428,10 @@ input:checked + .slider:before { transform: translateX(18px); }
 
       <div class="section-title">업무 목록</div>
       <div class="filter-row">
-        <button class="filter-btn active" onclick="filterTasks('all',this)">전체</button>
-        <button class="filter-btn" onclick="filterTasks('wait',this)">대기</button>
+        <button class="filter-btn active" onclick="filterTasks('wait',this)">대기</button>
         <button class="filter-btn" onclick="filterTasks('ing',this)">진행중</button>
         <button class="filter-btn" onclick="filterTasks('done',this)">완료</button>
+        <button class="filter-btn" onclick="filterTasks('all',this)">전체</button>
       </div>
       <div class="export-row">
         <button class="export-btn excel" onclick="exportExcel()">엑셀 (.xlsx)</button>
@@ -595,16 +603,15 @@ let tasks = JSON.parse(localStorage.getItem(LS_TASKS) || '[]');
 let archive = JSON.parse(localStorage.getItem(LS_ARCHIVE) || '{}');
 let transcripts = JSON.parse(localStorage.getItem(LS_TRANSCRIPTS) || '[]'); 
 let idCounter = tasks.length ? Math.max(...tasks.map(t=>t.id)) + 1 : 1;
-let curFilter = 'all';
+let curFilter = 'wait'; // ★ 초기 로드 시 대기 상태를 기본으로 변경
 let pendingTasks = [];
 let savedApiKey = localStorage.getItem('ctm_gemini_key') || '';
-let isAutoSaveEnabled = localStorage.getItem('ctm_auto_save') !== 'false'; // 기본 자동저장 ON
+let isAutoSaveEnabled = localStorage.getItem('ctm_auto_save') !== 'false'; 
 
 function saveTasks() { localStorage.setItem(LS_TASKS, JSON.stringify(tasks)); }
 function saveArchive() { localStorage.setItem(LS_ARCHIVE, JSON.stringify(archive)); }
 function saveTranscripts() { localStorage.setItem(LS_TRANSCRIPTS, JSON.stringify(transcripts)); }
 
-/* ── 전사 기록 추가/삭제 로직 ── */
 function addTranscript(title, type, text, taskCount) {
   if(!text) return;
   transcripts.unshift({ id: Date.now(), title, type, text, taskCount, date: new Date().toISOString() });
@@ -654,9 +661,6 @@ function toggleAutoSave() {
   toast(isAutoSaveEnabled ? '✅ 구글 드라이브 자동 저장 켜짐' : '⏸️ 구글 드라이브 자동 저장 꺼짐');
 }
 
-/* ══════════════════════════════════════════════
-   💾 로컬 백업 및 복구 기능
-══════════════════════════════════════════════ */
 function exportLocalBackup() {
   const backupData = { tasks: tasks, archive: archive, contacts: contacts, transcripts: transcripts, exportedAt: new Date().toISOString() };
   const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -691,13 +695,9 @@ function resetAllData() {
   }
 }
 
-/* ══════════════════════════════════════════════
-   기존 기능들 (분석, 렌더링 등)
-══════════════════════════════════════════════ */
 function runArchiveNow() { const count = runArchive(); if(count===0) toast('완료된 업무가 없어요.'); else { toast(`✅ ${count}개 완료 업무 월별 정리됨`); renderTasks(); renderArchive(); } }
 function runArchive() { const doneTasks = tasks.filter(t=>t.status==='done'); if(!doneTasks.length) return 0; doneTasks.forEach(t=>{ const d=new Date(t.doneAt||Date.now()); const key=`${d.getFullYear()}년 ${d.getMonth()+1}월`; if(!archive[key]) archive[key]=[]; archive[key].push(t); }); tasks = tasks.filter(t=>t.status!=='done'); saveTasks(); saveArchive(); if(gdAccessToken){ gdriveSaveTasks(); gdriveSaveArchive(); } return doneTasks.length; }
 
-/* 🎙 음성 녹음 */
 let recorder=null, chunks=[], recBlob=null, player=null, isRec=false, timerID=null, secs=0, animID=null, analyser=null;
 async function toggleRecording() { if(!isRec) await startRec(); else stopRec(); }
 async function startRec() { let stream; try { stream = await navigator.mediaDevices.getUserMedia({audio:true}); } catch(e) { alert("마이크 권한 허용이 필요합니다."); return; } const ctx = new (window.AudioContext||window.webkitAudioContext)(); analyser = ctx.createAnalyser(); analyser.fftSize=64; ctx.createMediaStreamSource(stream).connect(analyser); drawBars(); chunks=[]; recorder=new MediaRecorder(stream); recorder.ondataavailable=e=>chunks.push(e.data); recorder.onstop=() => { recBlob=new Blob(chunks,{type:'audio/webm'}); player=new Audio(URL.createObjectURL(recBlob)); player.ontimeupdate=updateBar; player.onended=()=>setPlayIcon(false); cancelAnimationFrame(animID); showRecResult(); }; recorder.start(); isRec=true; secs=0; setRecUI('recording'); document.getElementById('rec-result').classList.remove('show'); document.getElementById('waveform-wrap').classList.add('show'); timerID=setInterval(()=>{ secs++; document.getElementById('rec-timer').textContent=String(Math.floor(secs/60)).padStart(2,'0')+':'+String(secs%60).padStart(2,'0'); },1000); }
@@ -712,8 +712,6 @@ function seekAudio(e){if(!player||!player.duration)return;const r=e.currentTarge
 function discardRec(){recBlob=null;player=null;document.getElementById('rec-result').classList.remove('show');document.getElementById('voice-name').value='';document.getElementById('playback-bar').style.width='0%';document.getElementById('rec-timer').textContent='00:00';}
 function saveAudioFile() { if(!recBlob) return; const name=document.getElementById('voice-name').value.trim()||'녹음'; const now=new Date(); const filename=`녹음_${name}_${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}_${String(now.getHours()).padStart(2,'0')}-${String(now.getMinutes()).padStart(2,'0')}.webm`; const url=URL.createObjectURL(recBlob); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url); toast(`💾 "${filename}" 저장됨`); }
 
-/* ★ WebM 완벽 우회 인코딩 ★ 
-   webm도 강제로 convertToWav 거치게 만들어서 오류 원천 차단 */
 const SUPPORTED_TYPES = ['audio/mp3', 'audio/wav', 'audio/aac', 'audio/ogg', 'audio/flac', 'audio/x-m4a', 'audio/m4a'];
 function isSupported(file) { return SUPPORTED_TYPES.some(s => (file.type||'').toLowerCase().includes(s.split('/')[1])) || file.name.match(/\.(mp3|wav|aac|ogg|flac|m4a)$/i); }
 async function prepareAudioForAnalysis(file, loadingEl) { if (isSupported(file)) return { blob: file, mimeType: file.type || 'audio/mp3', converted: false }; if (loadingEl) loadingEl.textContent = `🔄 안전한 전송을 위해 포맷 최적화 중...`; try { const wavBlob = await convertToWav(file); return { blob: wavBlob, mimeType: 'audio/wav', converted: true }; } catch(e) { return { blob: file, mimeType: file.type || 'audio/mp3', converted: false }; } }
@@ -792,7 +790,6 @@ async function analyzeUploadedFile() {
       
       renderExtracted(parsed.tasks||[], name, `📂 ${name}`, 'upload');
       
-      // 자동 저장 구문 (경로: WORK/TOTAL/RECORD)
       if(gdAccessToken){ 
         toast('☁️ 분석된 파일을 구글 드라이브에 저장 중...');
         const n=new Date(); 
@@ -938,12 +935,10 @@ function renderGdriveStatus(){
   if(gdAccessToken){ 
     st.className='gdrive-status connected'; document.getElementById('gdrive-status-text').textContent='연결됨 (자동 백업 활성화)'; 
     btn.className='gdrive-connect-btn sign-out'; btn.innerHTML='연결 해제'; btn.onclick = gdriveSignOut;
-    // 연결 성공 시에만 토글 표시
     document.getElementById('gdrive-toggle-wrapper').style.display = 'flex';
   } else {
     st.className='gdrive-status disconnected'; document.getElementById('gdrive-status-text').textContent='연결 안 됨'; 
     btn.className='gdrive-connect-btn sign-in'; btn.innerHTML='<svg width="16" height="16" viewBox="0 0 24 24" fill="white" style="margin-right:4px;"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" opacity="0.85"/></svg> Google 계정으로 로그인'; btn.onclick = gdriveSignIn;
-    // 연결 해제 시 토글 숨김
     document.getElementById('gdrive-toggle-wrapper').style.display = 'none';
   }
 }
@@ -951,7 +946,6 @@ function renderGdriveStatus(){
 async function getOrCreateFolderPath(pathStr) { const parts = pathStr.split('/'); let parentId = 'root'; for (const name of parts) { const q = encodeURIComponent(`name='${name}' and mimeType='application/vnd.google-apps.folder' and '${parentId}' in parents and trashed=false`); const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&fields=files(id,name)&spaces=drive`, { headers: { 'Authorization': `Bearer ${gdAccessToken}` } }); const data = await res.json(); if (data.files && data.files.length > 0) { parentId = data.files[0].id; } else { const createRes = await fetch('https://www.googleapis.com/drive/v3/files', { method: 'POST', headers: { 'Authorization': `Bearer ${gdAccessToken}`, 'Content-Type': 'application/json' }, body: JSON.stringify({ name: name, mimeType: 'application/vnd.google-apps.folder', parents: [parentId] }) }); const createData = await createRes.json(); parentId = createData.id; } } return parentId; }
 async function uploadToDrive(fileName, mimeType, content, folderPath) { if (!gdAccessToken) return false; try { const folderId = await getOrCreateFolderPath(folderPath); const blob = content instanceof Blob ? content : new Blob([content], { type: mimeType }); const b64 = await new Promise(res => { const r = new FileReader(); r.onloadend = () => res(r.result.split(',')[1]); r.readAsDataURL(blob); }); const boundary = 'ctm_boundary_' + Date.now(); const bodyStr = `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify({ name: fileName, parents: [folderId] })}\r\n--${boundary}\r\nContent-Type: ${mimeType}\r\nContent-Transfer-Encoding: base64\r\n\r\n${b64}\r\n--${boundary}--`; const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', { method: 'POST', headers: { 'Authorization': `Bearer ${gdAccessToken}`, 'Content-Type': `multipart/related; boundary=${boundary}` }, body: bodyStr }); if (!res.ok) throw new Error('업로드 실패'); return true; } catch(e) { console.error('Drive 오류:', e); return false; } }
 
-/* 드라이브 자동 저장 기능 업데이트 (토글 체크) */
 async function gdriveSaveTasks(){ if(!gdAccessToken || !isAutoSaveEnabled) return; const n=new Date(); const ok=await uploadToDrive(`업무목록_${n.getFullYear()}-${n.getMonth()+1}-${n.getDate()}.json`, 'application/json', JSON.stringify({tasks},null,2), 'WORK/TOTAL/LIST'); if(ok) toast('☁️ 업무 목록 자동 저장 완료'); }
 async function gdriveSaveArchive(){ if(!gdAccessToken || !isAutoSaveEnabled) return; const n=new Date(); const ok=await uploadToDrive(`월별정리_${n.getFullYear()}-${n.getMonth()+1}.json`, 'application/json', JSON.stringify({archive},null,2), 'WORK/TOTAL/LIST'); if(ok) toast('☁️ 월별 정리 자동 저장 완료'); }
 async function gdriveSaveAudioFile(blob, fname) { 
